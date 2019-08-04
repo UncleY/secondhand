@@ -41,7 +41,7 @@ public class CommonConstants {
     /**
      * 随机种子
      */
-    private static final ThreadLocalRandom localRandom = ThreadLocalRandom.current();
+    public static final ThreadLocalRandom localRandom = ThreadLocalRandom.current();
     /**
      * 模拟agent的集合
      */
