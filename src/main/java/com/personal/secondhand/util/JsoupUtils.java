@@ -23,6 +23,14 @@ public class JsoupUtils {
             url = "https:" + url;
         }
         return Jsoup.connect(url)
+                .header("Host","webim.58.com")
+                .header("Accept","text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+                .header("Accept-Language","zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2")
+                .header("Accept-Encoding","gzip, deflate, br")
+                .header("DNT","1")
+                .header("Connection","keep-alive")
+                .header("Upgrade-Insecure-Requests","1")
+                .header("TE","Trailers")
                 // 代理
                 .userAgent(CommonConstants.getRandomUserAgent())
                 // 编码格式

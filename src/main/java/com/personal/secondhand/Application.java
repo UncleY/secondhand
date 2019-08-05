@@ -1,6 +1,7 @@
 package com.personal.secondhand;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
 import com.personal.secondhand.constants.CommonConstants;
@@ -12,15 +13,16 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.joda.time.DateTime;
+import org.jsoup.Connection;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Stream;
 
@@ -36,12 +38,35 @@ public class Application {
      */
     private static CopyOnWriteArraySet<String> urlCOWSet = new CopyOnWriteArraySet<>();
 
-//    public static void main(String[] args)throws Exception {
+    public static void main(String[] args) throws Exception {
 //        Long randomTime = CommonConstants.localRandom.nextLong(1000L, 3000L);
 //        System.out.println(randomTime);
-//    }
+//        String path = "D:\\yangrui\\git\\secondhand\\src\\main\\resources\\58ListJson";
+        String path = Application.class.getClassLoader().getResource("58List.json").getFile();
+        System.out.println(path);
 
-    public static void main(String[] args) throws Exception {
+        File file = new File(path);
+        FileUtils.touch(file);
+        List<String> list = new ArrayList<>();
+        list.add("D:/yangrui/git/secondhand/target/classes/1.json");
+        list.add("D:/yangrui/git/secondhand/target/classes/2.json");
+        list.add("D:/yangrui/git/secondhand/target/classes/3.json");
+        list.add("D:/yangrui/git/secondhand/target/classes/4.json");
+
+        JSONArray jsonArray = new JSONArray();
+        jsonArray.addAll(list);
+
+        String json = jsonArray.toJSONString();
+        FileUtils.writeStringToFile(file, json, "UTF-8");
+
+        String arrayJson = FileUtils.readFileToString(file, "UTF-8");
+        JSONArray array = JSON.parseArray(arrayJson);
+        System.out.println(array);
+
+
+    }
+
+    public static void main1(String[] args) throws Exception {
         log.info("任务开始执行时间" + new DateTime().toString("yyyy-MM-dd HH:mm:ss.SSS"));
 
         ExecutorService service = Executors.newFixedThreadPool(3);
@@ -169,6 +194,35 @@ public class Application {
         }
         return urlList;
     }
+
+
+    private static File get58JsonFile() {
+        String path = Application.class.getClassLoader().getResource("58List.json").getFile();
+        return new File(path);
+    }
+
+    private static void get58ListUrl2JsonFile(String pageUrl) throws Exception {
+        List<String> urlList = new ArrayList<>(0);
+        Document document = JsoupUtils.connect(pageUrl).get();
+        Elements list_li = document.select("[class='house-list-wrap'] li");
+        for (Element every : list_li) {
+            Elements pic = every.select("[class=pic]").select("a");
+            String href = pic.attr("href");
+            urlList.add(href);
+        }
+
+        JSONArray jsonArray = new JSONArray();
+        jsonArray.addAll(urlList);
+        File file = get58JsonFile();
+        String infoJson = FileUtils.readFileToString(file, CommonConstants.ENCODING);
+        JSONArray array = JSON.parseArray(infoJson);
+        array.iterator();
+
+
+
+
+    }
+
 
     /**
      * 详情地址
