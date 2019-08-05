@@ -20,8 +20,6 @@ import org.jsoup.select.Elements;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Stream;
@@ -38,33 +36,175 @@ public class Application {
      */
     private static CopyOnWriteArraySet<String> urlCOWSet = new CopyOnWriteArraySet<>();
 
+    /**
+     * 存储到本地的列表html内容的文件名称前缀
+     */
+    private static final String FILE_NAME_58_LIST_HTML = "58ListHtml_";
+    /**
+     * 存储到本地的详情html内容的文件名称前缀
+     */
+    private static final String FILE_NAME_58_INFO_HTML = "58InfoHtml_";
+    /**
+     * 存储关联关系的json文件名称
+     */
+    private static final String FILE_NAME_58_LIST_JSON = "58ListJson";
+
+    /**
+     * 有点思路了，先列表url不用存储。将每一页的html都存储起来
+     *
+     * @param args
+     * @throws Exception
+     */
     public static void main(String[] args) throws Exception {
-//        Long randomTime = CommonConstants.localRandom.nextLong(1000L, 3000L);
-//        System.out.println(randomTime);
-//        String path = "D:\\yangrui\\git\\secondhand\\src\\main\\resources\\58ListJson";
-        String path = Application.class.getClassLoader().getResource("58List.json").getFile();
-        System.out.println(path);
 
-        File file = new File(path);
+        // 第一步
+//        create58InfoListFile();
+
+        // 第二步
+//        parseAllListFile();
+
+        // 第三部
+        parseAllInfo();
+    }
+
+    /**
+     * 获取58所有列表的数据存入到文件中 （在本地解析少于 爬取过载的限制）
+     *
+     * @throws Exception
+     */
+    private static void create58InfoListFile() throws Exception {
+        Set<String> pnList = new LinkedHashSet<>(0);
+
+        // 获取存储路径
+        File _58Path = get58File();
+        String parentPath = _58Path.getPath();
+        Map<String, String> cookies = new HashMap<>(0);
+
+        // 总共的27页 但不是全部数据， 只是显示7月-31日的  可能就是只给出一个月的数据而已
+        int _58TotalPage = 27;
+        for (int i = 1; i <= _58TotalPage; i++) {
+            String pnUrl = "https://sy.58.com/ershoufang/0/pn" + i + "/?ClickID=1";
+            if (pnList.add(pnUrl)) {
+
+                // 每个列表页html内容存储到文件里 文件名为url
+                System.out.println(pnUrl);
+                Connection connection = JsoupUtils.connect(pnUrl).referrer("https://sy.58.com/?PGTID=0d40000c-02cf-b884-4f20-a9d4b1daa7bf&ClickID=1");
+                Connection.Response response = connection.execute();
+                // 获取cookies
+                cookies = response.cookies();
+                // 获取 html
+                String html = response.body();
+
+                // 存储文件内容至class path下
+                File file = new File(parentPath + "/" + FILE_NAME_58_LIST_HTML + i);
+                FileUtils.touch(file);
+                FileUtils.writeStringToFile(file, html, CommonConstants.ENCODING);
+
+                // 随机休眠  1~5秒
+                randomSleep();
+            }
+        }
+    }
+
+    /**
+     * 解析全部的列表文件内容 并解析出相关的详情页面存入本地文件
+     * 每个list页面有128条数据详情。。
+     *
+     * @throws Exception
+     */
+    private static void parseAllListFile() throws Exception {
+        File _58PathFile = get58File();
+        JSONObject jsonObject = new JSONObject();
+        for (File file : _58PathFile.listFiles()) {
+            if (StringUtils.startsWith(file.getName(), FILE_NAME_58_LIST_HTML)) {
+                String html = FileUtils.readFileToString(file, CommonConstants.ENCODING);
+
+                Document document = JsoupUtils.parse(html);
+
+                String refer = document.select("link[rel=canonical]").attr("href");
+
+                List<String> urlList = new ArrayList<>(0);
+
+                // 128条子数据
+                Elements list_li = document.select("[class='house-list-wrap'] li");
+                for (Element every : list_li) {
+                    Elements pic = every.select("[class=pic]").select("a");
+                    String href = pic.attr("href");
+                    urlList.add(href);
+                }
+                JSONArray jsonArray = new JSONArray();
+                jsonArray.addAll(urlList);
+                jsonObject.put(refer, jsonArray);
+            }
+        }
+        File file = new File(_58PathFile.getPath() + File.separator + FILE_NAME_58_LIST_JSON);
         FileUtils.touch(file);
-        List<String> list = new ArrayList<>();
-        list.add("D:/yangrui/git/secondhand/target/classes/1.json");
-        list.add("D:/yangrui/git/secondhand/target/classes/2.json");
-        list.add("D:/yangrui/git/secondhand/target/classes/3.json");
-        list.add("D:/yangrui/git/secondhand/target/classes/4.json");
+        FileUtils.writeStringToFile(file, jsonObject.toJSONString(), CommonConstants.ENCODING);
+    }
 
-        JSONArray jsonArray = new JSONArray();
-        jsonArray.addAll(list);
+    /**
+     * 写入json file内容
+     *
+     * @param jsonObject
+     * @throws Exception
+     */
+    private static void writeJsonToFile(JSONObject jsonObject) throws Exception {
+        File _58PathFile = get58File();
+        File file = new File(_58PathFile.getPath() + File.separator + FILE_NAME_58_LIST_JSON);
+        FileUtils.touch(file);
+        FileUtils.writeStringToFile(file, jsonObject.toJSONString(), CommonConstants.ENCODING);
+    }
 
-        String json = jsonArray.toJSONString();
-        FileUtils.writeStringToFile(file, json, "UTF-8");
+    /**
+     * 从json file读取内容
+     *
+     * @return
+     * @throws Exception
+     */
+    private static JSONObject readFileToJson() throws Exception {
+        File _58PathFile = get58File();
+        File file = new File(_58PathFile.getPath() + File.separator + FILE_NAME_58_LIST_JSON);
+        String json = FileUtils.readFileToString(file, CommonConstants.ENCODING);
+        return JSON.parseObject(json);
+    }
 
-        String arrayJson = FileUtils.readFileToString(file, "UTF-8");
-        JSONArray array = JSON.parseArray(arrayJson);
-        System.out.println(array);
+
+    private static void parseAllInfo() throws Exception {
+
+        File _58JsonFile = get58File();
+        JSONObject jsonObject = readFileToJson();
+
+        Set<Map.Entry<String, Object>> set = jsonObject.entrySet();
+        for (Map.Entry<String, Object> entry : set) {
+            // 从哪个列表来的
+            String key = entry.getKey();
+            // 该列表关联的详情url
+            Object value = entry.getValue();
+            if (JSONArray.class.isAssignableFrom(value.getClass())) {
+                JSONArray jsonArray = (JSONArray) value;
+                Iterator iterator = jsonArray.iterator();
+                while (iterator.hasNext()) {
+                    // https://sy.58.com/ershoufang/38840683082017x.shtml?utm_source=&spm=
+                    String infoUrl = iterator.next().toString();
+                    System.out.println(infoUrl);
+                    Document document = JsoupUtils.connect(infoUrl).referrer(key).get();
+                    String html = document.html();
+
+                    String fileName = infoUrl.substring(infoUrl.lastIndexOf("/") + 1, infoUrl.lastIndexOf("."));
+
+                    File file = new File(_58JsonFile.getPath() + File.separator + FILE_NAME_58_INFO_HTML + fileName);
+                    FileUtils.touch(file);
+                    FileUtils.writeStringToFile(file, html, CommonConstants.ENCODING);
+
+                    randomSleep(2, 4);
+                }
+
+            }
+        }
 
 
     }
+
 
     public static void main1(String[] args) throws Exception {
         log.info("任务开始执行时间" + new DateTime().toString("yyyy-MM-dd HH:mm:ss.SSS"));
@@ -106,27 +246,6 @@ public class Application {
         workbook.write(output);
         output.flush();
         log.info("任务结束执行时间" + new DateTime().toString("yyyy-MM-dd HH:mm:ss.SSS"));
-        // 加密字体需 加载font
-
-//
-//        Document document = Jsoup.connect(_58url).get();
-//
-//        Elements div_ul = document.select("[class=house-list-wrap]");
-//        Elements list_li = div_ul.select("li");
-//        for (Element every : list_li) {
-//            Elements pic = every.select("[class=pic]").select("a");
-//            String href = pic.attr("href");
-//            String imgSrc = pic.select("img").attr("data-src");
-////            System.out.println(href);
-////            System.out.println(imgSrc);
-//            Elements info = every.select("[class=list-info]");
-//            Elements jjrinfo = every.select("[class=jjrinfo]");
-//            Elements price = every.select("[class=jjrinfo]");
-//            System.out.println("############");
-//            break;
-//        }
-//        String html = document.html();
-//        System.out.println(html);
     }
 
     /**
@@ -195,15 +314,20 @@ public class Application {
         return urlList;
     }
 
-
-    private static File get58JsonFile() {
-        String path = Application.class.getClassLoader().getResource("58List.json").getFile();
+    /**
+     * 获取58文件夹的路径
+     *
+     * @return
+     */
+    private static File get58File() {
+        String path = Application.class.getClassLoader().getResource("58").getFile();
         return new File(path);
     }
 
     private static void get58ListUrl2JsonFile(String pageUrl) throws Exception {
         List<String> urlList = new ArrayList<>(0);
-        Document document = JsoupUtils.connect(pageUrl).get();
+        Connection connection = JsoupUtils.connect(pageUrl);
+        Document document = connection.get();
         Elements list_li = document.select("[class='house-list-wrap'] li");
         for (Element every : list_li) {
             Elements pic = every.select("[class=pic]").select("a");
@@ -213,14 +337,10 @@ public class Application {
 
         JSONArray jsonArray = new JSONArray();
         jsonArray.addAll(urlList);
-        File file = get58JsonFile();
+        File file = get58File();
         String infoJson = FileUtils.readFileToString(file, CommonConstants.ENCODING);
         JSONArray array = JSON.parseArray(infoJson);
         array.iterator();
-
-
-
-
     }
 
 
@@ -244,6 +364,8 @@ public class Application {
         System.out.println("######head title########################");
         String headTitle = document.select("html head title").text();
         System.out.println(headTitle);
+        String canonical = document.select("html head link[rel=canonical]").attr("href");
+        System.out.println(canonical);
         System.out.println("######meta content############");
         String content = document.select("html head meta[name='description']").attr("content");
         System.out.println(content);
@@ -251,7 +373,9 @@ public class Application {
         Optional<String> count = Stream.of(content.split(";")[1].split("；")).filter(o -> StringUtils.startsWith(o, "售价：")).findFirst();
         String cost = count.get();
         System.out.println(cost);
-
+        System.out.println("######title ############");
+        String title = document.select("div[class=house-title] h1[class=c_333 f20]").text();
+        System.out.println(title);
         System.out.println("#######房子结构信息 generalSituation###########");
         String room = document.select("div[id=generalSituation] ul[class=general-item-left] li:eq(1) span[class=c_000]").text();
         String area = document.select("div[id=generalSituation] ul[class=general-item-left] li:eq(2) span[class=c_000]").text();
@@ -289,10 +413,46 @@ public class Application {
 
         HouseInfo58 model = HouseInfo58.builder()
                 .infoUrl(infoUrl)
-                .title(headTitle)
-                .totalPrice(cost)
+                .headTitle(headTitle)
                 .metaDescription(content)
+                .metaCanonical(canonical)
+                .pubDate(pubDate)
+                .title(title)
+                .downPayment(downPayment)
+                .totalPrice(cost)
+                .room(room)
+                .area(area)
+                .toward(toward)
+                .floor("")
+                .decoration("")
+                .propertyRight("")
+
+
+                .totalPrice(cost)
                 .build();
         return model;
     }
+
+
+    /**
+     * 1~5秒直接随机睡眠
+     *
+     * @throws Exception
+     */
+    private static void randomSleep() throws Exception {
+        randomSleep(1, 5);
+    }
+
+    /**
+     * start~end秒之间睡眠
+     *
+     * @param start
+     * @param end
+     * @throws Exception
+     */
+    private static void randomSleep(int start, int end) throws Exception {
+        Long sleepTime = CommonConstants.localRandom.nextLong(start * 1000L, end * 1000L);
+        Thread.sleep(sleepTime);
+    }
+
 }
