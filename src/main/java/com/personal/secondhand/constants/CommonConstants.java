@@ -35,7 +35,7 @@ public class CommonConstants {
     /**
      * timeout 默认5秒
      */
-    public static final int TIME_OUT = 5000;
+    public static final int TIME_OUT = 10000;
 
 
     /**
