@@ -36,13 +36,13 @@ public class WBPageProcessor implements PageProcessor {
             .addHeader("Connection", "keep-alive")
             .setRetryTimes(3)
             .setTimeOut(CommonConstants.TIME_OUT)
-            .setSleepTime(1000);
+            .setSleepTime(3000);
 
     @Override
     public void process(Page page) {
         String url = page.getRequest().getUrl();
         System.out.println(url);
-        System.out.println(page.getHtml().get());
+//        System.out.println(page.getHtml().get());
         if (url.startsWith("https://sy.58.com/ershoufang/3")) {
             System.out.println("详情页");
             HouseInfo58 model = Application.parse58Info(page.getHtml().get());
@@ -82,7 +82,7 @@ public class WBPageProcessor implements PageProcessor {
                 //开启5个线程抓取
                 .thread(4)
                 //启动爬虫
-                .runAsync();
+                .run();
 
     }
 }
