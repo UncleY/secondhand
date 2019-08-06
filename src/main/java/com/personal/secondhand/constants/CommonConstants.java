@@ -33,9 +33,9 @@ public class CommonConstants {
      */
     public static final String ENCODING = "UTF-8";
     /**
-     * timeout 默认5秒
+     * timeout 默认30秒
      */
-    public static final int TIME_OUT = 10000;
+    public static final int TIME_OUT = 30000;
 
 
     /**

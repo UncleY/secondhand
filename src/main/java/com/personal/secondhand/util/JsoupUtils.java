@@ -19,7 +19,7 @@ public class JsoupUtils {
      * @return
      * @throws Exception
      */
-    public static Document parse(String html) throws Exception {
+    public static Document parse(String html) {
         return Jsoup.parse(html);
     }
 

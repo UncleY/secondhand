@@ -48,6 +48,11 @@ public class Application {
      * 存储关联关系的json文件名称
      */
     private static final String FILE_NAME_58_LIST_JSON = "58ListJson";
+    /**
+     * html文件名后缀
+     */
+    private static final String FILE_NAME_SUFFIX = ".html";
+
 
     /**
      * 有点思路了，先列表url不用存储。将每一页的html都存储起来
@@ -57,14 +62,61 @@ public class Application {
      */
     public static void main(String[] args) throws Exception {
 
-        // 第一步
-//        create58InfoListFile();
+        // 第一步 缓存本地列表页面 每页有128条数据
+        create58InfoListFile();
 
-        // 第二步
-//        parseAllListFile();
+        // 第二步 解析每个列表页面内容，并生成映射关系（方便制造refer内容）
+        parseAllListFile();
 
-        // 第三部
+        // 第三部 从第二步的映射关系 爬取并生成缓存详情文件
         parseAllInfo();
+
+        // 第四步 获取全部第三步生成的详情缓存文件进行解析
+        List<HouseInfo58> info58List = parseAll58Info();
+
+        // 第五步 生成excel内容导出
+        List<String[]> dataList = new ArrayList<>(0);
+        info58List.stream().parallel()
+                .forEach(model -> {
+                    dataList.add(new String[]{
+                            model.getInfoUrl(),
+                            model.getHeadTitle(),
+                            model.getMetaDescription(),
+                            model.getMetaCanonical(),
+                            model.getPubDate(),
+                            model.getHouseNum(),
+                            model.getTitle(),
+                            model.getDownPayment(),
+                            model.getTotalPrice(),
+                            model.getPerSquare(),
+                            model.getRoom(),
+                            model.getArea(),
+                            model.getToward(),
+                            model.getFloor(),
+                            model.getDecoration(),
+                            model.getPropertyRight(),
+                            model.getCommunity(),
+                            model.getRegion(),
+                            model.getPhoneNum(),
+                            JSON.toJSONString(model.getImgUrlList())
+                    });
+                });
+
+
+        String[] title58 = new String[]{"详情页url", "title", "description", "规范url地址", "发布日期", "房源编号", "标题", "首付参考", "总价", "单价", "户型结构", "建筑面积", "户型朝向", "所属楼层", "装修情况", "产权情况", "小区", "位置", "联系方式", "图片url地址（jsonArray）"};
+
+        XSSFWorkbook workbook = ExcelUtil.make2007Excel("58", title58, dataList);
+
+        String todayString = new DateTime().toString("yyyyMMdd_HHmmss");
+        File file = new File("D:/ershoufang" + todayString + ".xlsx");
+        FileUtils.touch(file);
+        FileOutputStream output = FileUtils.openOutputStream(file);
+
+        workbook.write(output);
+        output.flush();
+        output.close();
+
+        workbook.close();
     }
 
     /**
@@ -96,7 +148,7 @@ public class Application {
                 String html = response.body();
 
                 // 存储文件内容至class path下
-                File file = new File(parentPath + "/" + FILE_NAME_58_LIST_HTML + i);
+                File file = new File(parentPath + "/" + FILE_NAME_58_LIST_HTML + i + FILE_NAME_SUFFIX);
                 FileUtils.touch(file);
                 FileUtils.writeStringToFile(file, html, CommonConstants.ENCODING);
 
@@ -137,35 +189,7 @@ public class Application {
                 jsonObject.put(refer, jsonArray);
             }
         }
-        File file = new File(_58PathFile.getPath() + File.separator + FILE_NAME_58_LIST_JSON);
-        FileUtils.touch(file);
-        FileUtils.writeStringToFile(file, jsonObject.toJSONString(), CommonConstants.ENCODING);
-    }
-
-    /**
-     * 写入json file内容
-     *
-     * @param jsonObject
-     * @throws Exception
-     */
-    private static void writeJsonToFile(JSONObject jsonObject) throws Exception {
-        File _58PathFile = get58File();
-        File file = new File(_58PathFile.getPath() + File.separator + FILE_NAME_58_LIST_JSON);
-        FileUtils.touch(file);
-        FileUtils.writeStringToFile(file, jsonObject.toJSONString(), CommonConstants.ENCODING);
-    }
-
-    /**
-     * 从json file读取内容
-     *
-     * @return
-     * @throws Exception
-     */
-    private static JSONObject readFileToJson() throws Exception {
-        File _58PathFile = get58File();
-        File file = new File(_58PathFile.getPath() + File.separator + FILE_NAME_58_LIST_JSON);
-        String json = FileUtils.readFileToString(file, CommonConstants.ENCODING);
-        return JSON.parseObject(json);
+        writeJsonToFile(jsonObject);
     }
 
 
@@ -187,22 +211,53 @@ public class Application {
                     // https://sy.58.com/ershoufang/38840683082017x.shtml?utm_source=&spm=
                     String infoUrl = iterator.next().toString();
                     System.out.println(infoUrl);
-                    Document document = JsoupUtils.connect(infoUrl).referrer(key).get();
-                    String html = document.html();
+                    try {
+                        Document document = JsoupUtils.connect(infoUrl).referrer(key).get();
+                        String html = document.html();
 
-                    String fileName = infoUrl.substring(infoUrl.lastIndexOf("/") + 1, infoUrl.lastIndexOf("."));
+                        String fileName = infoUrl.substring(infoUrl.lastIndexOf("/") + 1, infoUrl.lastIndexOf("."));
 
-                    File file = new File(_58JsonFile.getPath() + File.separator + FILE_NAME_58_INFO_HTML + fileName);
-                    FileUtils.touch(file);
-                    FileUtils.writeStringToFile(file, html, CommonConstants.ENCODING);
-
-                    randomSleep(2, 4);
+                        File file = new File(_58JsonFile.getPath() + File.separator + FILE_NAME_58_INFO_HTML + fileName + FILE_NAME_SUFFIX);
+                        FileUtils.touch(file);
+                        FileUtils.writeStringToFile(file, html, CommonConstants.ENCODING);
+                        randomSleep(2, 4);
+                    } catch (Exception e) {
+                        log.warning(e.getMessage());
+                        continue;
+                    }
                 }
-
             }
         }
+    }
 
 
+    /**
+     * 解析全部详情内容
+     *
+     * @throws Exception
+     */
+    private static List<HouseInfo58> parseAll58Info() throws Exception {
+        List<HouseInfo58> voList = new ArrayList<>(0);
+        File _58Path = get58File();
+        File[] files = _58Path.listFiles((o1, o2) -> StringUtils.startsWith(o2, FILE_NAME_58_INFO_HTML));
+        Arrays.stream(files)
+//                .parallel()
+                .forEach(o -> {
+                    try {
+                        String html = FileUtils.readFileToString(o, CommonConstants.ENCODING);
+                        HouseInfo58 vo = parse58Info(html);
+                        System.out.println(vo);
+                        voList.add(vo);
+                    } catch (Exception e) {
+                        log.warning(e.getMessage());
+                    }
+                });
+//        for (File file : files) {
+//            String html = FileUtils.readFileToString(file, CommonConstants.ENCODING);
+//            HouseInfo58 vo = parse58Info(html);
+//            voList.add(vo);
+//        }
+        return voList;
     }
 
 
@@ -343,6 +398,103 @@ public class Application {
         array.iterator();
     }
 
+    /**
+     * 根据html详情页面解析成vo内容
+     *
+     * @param html
+     * @return
+     */
+    private static HouseInfo58 parse58Info(String html) {
+        Document document = JsoupUtils.parse(html);
+        System.out.println("######head title########################");
+        String headTitle = document.select("html head title").text();
+        System.out.println(headTitle);
+        String canonical = document.select("html head link[rel=canonical]").attr("href");
+        System.out.println(canonical);
+        System.out.println("######meta content############");
+        String content = document.select("html head meta[name='description']").attr("content");
+        System.out.println(content);
+
+        Optional<String> count = Stream.of(content.split(";")[1].split("；")).filter(o -> StringUtils.startsWith(o, "售价：")).findFirst();
+        String totalPrice = count.get();
+        System.out.println(totalPrice);
+
+        String perSquare = totalPrice.substring(totalPrice.indexOf("（") + 1, totalPrice.lastIndexOf("元"));
+        System.out.println(perSquare);
+        System.out.println("######title ############");
+        String title = document.select("div[class=house-title] h1[class=c_333 f20]").text();
+        System.out.println(title);
+        System.out.println("#######房子结构信息 generalSituation###########");
+        String room = document.select("div[id=generalSituation] ul[class=general-item-left] li:eq(1) span[class=c_000]").text();
+        String area = document.select("div[id=generalSituation] ul[class=general-item-left] li:eq(2) span[class=c_000]").text();
+        String toward = document.select("div[id=generalSituation] ul[class=general-item-left] li:eq(3) span[class=c_000]").text();
+
+        String floor = document.select("div[id=generalSituation] ul[class=general-item-right] li:eq(0) span[class=c_000]").text();
+        String decoration = document.select("div[id=generalSituation] ul[class=general-item-right] li:eq(1) span[class=c_000]").text();
+        String propertyRight = document.select("div[id=generalSituation] ul[class=general-item-right] li:eq(2) span[class=c_000]").text();
+        System.out.println(room);
+        System.out.println(area);
+        System.out.println(toward);
+        System.out.println(floor);
+        System.out.println(decoration);
+        System.out.println(propertyRight);
+
+        String community = document.select("ul[class=house-basic-item3] li:eq(0) span:eq(1)").text();
+        String region = document.select("ul[class=house-basic-item3] li:eq(1) span:eq(1)").text();
+
+        System.out.println("##########概述信息 generalDesc############");
+        String generalDesc = document.select("div[id=generalDesc] div[class=genaral-pic-desc]:eq(0) p[class=pic-desc-word]").text();
+        String houseNum = document.select("div[id=generalDesc] div[class=genaral-pic-desc]:eq(1) p[class=pic-desc-word]").text();
+        System.out.println(generalDesc);
+        System.out.println(houseNum);
+        System.out.println("#######联系方式############");
+        String phoneNum = document.select("[class=phone-num]").text();
+        System.out.println(phoneNum);
+        System.out.println("########首付参考##############");
+        String downPayment = document.select("div[id=generalExpense] ul[class=general-item-right] li span[class=c_000]").text();
+        System.out.println(downPayment);
+        System.out.println("########（可能）发布日期##iso 8601格式 没带时区 可能默认是北京时间+08:00###############");
+        String ldjson = document.select("script[type=application/ld+json]").html();
+        JSONObject jsonObject = JSON.parseObject(ldjson);
+        String pubDate = jsonObject.getString("pubDate");
+        System.out.println(pubDate);
+
+        System.out.println("########小图url地址##############");
+        List<String> imgUrlList = new ArrayList<>(0);
+        Elements elements = document.select("ul[id=smallPic] li");
+        for (Element ele : elements) {
+            String imgUrl = ele.attr("data-value");
+            if (StringUtils.isNotBlank(imgUrl)) {
+                imgUrlList.add(imgUrl);
+            }
+        }
+
+
+        HouseInfo58 model = HouseInfo58.builder()
+                .infoUrl(canonical)
+                .headTitle(headTitle)
+                .metaDescription(content)
+                .metaCanonical(canonical)
+                .pubDate(pubDate)
+                .houseNum(houseNum)
+                .title(title)
+                .downPayment(downPayment)
+                .totalPrice(totalPrice)
+                .perSquare(perSquare)
+                .room(room)
+                .area(area)
+                .toward(toward)
+                .floor(floor)
+                .decoration(decoration)
+                .propertyRight(propertyRight)
+                .community(community)
+                .region(region)
+                .phoneNum(phoneNum)
+                .imgUrlList(imgUrlList)
+                .build();
+        return model;
+    }
+
 
     /**
      * 详情地址
@@ -455,4 +607,29 @@ public class Application {
         Thread.sleep(sleepTime);
     }
 
+    /**
+     * 写入json file内容
+     *
+     * @param jsonObject
+     * @throws Exception
+     */
+    private static void writeJsonToFile(JSONObject jsonObject) throws Exception {
+        File _58PathFile = get58File();
+        File file = new File(_58PathFile.getPath() + File.separator + FILE_NAME_58_LIST_JSON);
+        FileUtils.touch(file);
+        FileUtils.writeStringToFile(file, jsonObject.toJSONString(), CommonConstants.ENCODING);
+    }
+
+    /**
+     * 从json file读取内容
+     *
+     * @return
+     * @throws Exception
+     */
+    private static JSONObject readFileToJson() throws Exception {
+        File _58PathFile = get58File();
+        File file = new File(_58PathFile.getPath() + File.separator + FILE_NAME_58_LIST_JSON);
+        String json = FileUtils.readFileToString(file, CommonConstants.ENCODING);
+        return JSON.parseObject(json);
+    }
 }

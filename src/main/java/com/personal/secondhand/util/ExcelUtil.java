@@ -12,7 +12,7 @@ public class ExcelUtil {
     public static XSSFWorkbook make2007Excel(String sheetName, String[] title, List<String[]> dataList) throws Exception {
         XSSFWorkbook workbook = new XSSFWorkbook();
         XSSFSheet sheet = workbook.createSheet(sheetName);
-        sheet.setDefaultColumnWidth(4000);
+        sheet.setDefaultColumnWidth(8000);
         Row firstRow = sheet.createRow(0);
         for (int i = 0; i < title.length; i++) {
             Cell cell = firstRow.createCell(i);
