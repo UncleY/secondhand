@@ -8,7 +8,7 @@ import com.personal.secondhand.constants.CommonConstants;
 import com.personal.secondhand.util.ExcelUtil;
 import com.personal.secondhand.util.JsoupUtils;
 import com.personal.secondhand.vo.HouseInfo58;
-import lombok.extern.java.Log;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -29,7 +29,7 @@ import java.util.stream.Stream;
  *
  * @author yangrui
  */
-@Log
+@Slf4j
 public class Application {
     /**
      * 爬取去重
@@ -53,6 +53,7 @@ public class Application {
      */
     private static final String FILE_NAME_SUFFIX = ".html";
 
+    private static ThreadLocal<String> proxyIp = new ThreadLocal<String>();
 
     /**
      * 有点思路了，先列表url不用存储。将每一页的html都存储起来
@@ -140,12 +141,9 @@ public class Application {
 
                 // 每个列表页html内容存储到文件里 文件名为url
                 System.out.println(pnUrl);
-                Connection connection = JsoupUtils.connect(pnUrl).referrer("https://sy.58.com/?PGTID=0d40000c-02cf-b884-4f20-a9d4b1daa7bf&ClickID=1");
-                Connection.Response response = connection.execute();
-                // 获取cookies
-                cookies = response.cookies();
+                Document document = JsoupUtils.connect(pnUrl).referrer("https://sy.58.com/?PGTID=0d40000c-02cf-b884-4f20-a9d4b1daa7bf&ClickID=1").ignoreHttpErrors(true).get();
                 // 获取 html
-                String html = response.body();
+                String html = document.html();
 
                 // 存储文件内容至class path下
                 File file = new File(parentPath + "/" + FILE_NAME_58_LIST_HTML + i + FILE_NAME_SUFFIX);
@@ -222,7 +220,7 @@ public class Application {
                         FileUtils.writeStringToFile(file, html, CommonConstants.ENCODING);
                         randomSleep(2, 4);
                     } catch (Exception e) {
-                        log.warning(e.getMessage());
+                        log.error("【获取详情页文件存储异常】", e);
                         continue;
                     }
                 }
@@ -241,7 +239,7 @@ public class Application {
         File _58Path = get58File();
         File[] files = _58Path.listFiles((o1, o2) -> StringUtils.startsWith(o2, FILE_NAME_58_INFO_HTML));
         Arrays.stream(files)
-//                .parallel()
+                .parallel()
                 .forEach(o -> {
                     try {
                         String html = FileUtils.readFileToString(o, CommonConstants.ENCODING);
@@ -249,7 +247,7 @@ public class Application {
                         System.out.println(vo);
                         voList.add(vo);
                     } catch (Exception e) {
-                        log.warning(e.getMessage());
+                        log.error("【解析异常】", e);
                     }
                 });
 //        for (File file : files) {
@@ -333,7 +331,7 @@ public class Application {
                                     model.getTotalPrice()
                             });
                         } else {
-                            log.warning("url路径已爬取过：" + url);
+                            log.info("url路径已爬取过：" + url);
                         }
                         index++;
                         Long sleepTime = CommonConstants.localRandom.nextLong(1000L, 5000L);
@@ -404,27 +402,27 @@ public class Application {
      * @param html
      * @return
      */
-    private static HouseInfo58 parse58Info(String html) {
+    public static HouseInfo58 parse58Info(String html) {
         Document document = JsoupUtils.parse(html);
-        System.out.println("######head title########################");
+//        System.out.println("######head title########################");
         String headTitle = document.select("html head title").text();
-        System.out.println(headTitle);
+//        System.out.println(headTitle);
         String canonical = document.select("html head link[rel=canonical]").attr("href");
-        System.out.println(canonical);
-        System.out.println("######meta content############");
+//        System.out.println(canonical);
+//        System.out.println("######meta content############");
         String content = document.select("html head meta[name='description']").attr("content");
-        System.out.println(content);
+//        System.out.println(content);
 
         Optional<String> count = Stream.of(content.split(";")[1].split("；")).filter(o -> StringUtils.startsWith(o, "售价：")).findFirst();
         String totalPrice = count.get();
-        System.out.println(totalPrice);
+//        System.out.println(totalPrice);
 
         String perSquare = totalPrice.substring(totalPrice.indexOf("（") + 1, totalPrice.lastIndexOf("元"));
-        System.out.println(perSquare);
-        System.out.println("######title ############");
+//        System.out.println(perSquare);
+//        System.out.println("######title ############");
         String title = document.select("div[class=house-title] h1[class=c_333 f20]").text();
-        System.out.println(title);
-        System.out.println("#######房子结构信息 generalSituation###########");
+//        System.out.println(title);
+//        System.out.println("#######房子结构信息 generalSituation###########");
         String room = document.select("div[id=generalSituation] ul[class=general-item-left] li:eq(1) span[class=c_000]").text();
         String area = document.select("div[id=generalSituation] ul[class=general-item-left] li:eq(2) span[class=c_000]").text();
         String toward = document.select("div[id=generalSituation] ul[class=general-item-left] li:eq(3) span[class=c_000]").text();
@@ -432,34 +430,34 @@ public class Application {
         String floor = document.select("div[id=generalSituation] ul[class=general-item-right] li:eq(0) span[class=c_000]").text();
         String decoration = document.select("div[id=generalSituation] ul[class=general-item-right] li:eq(1) span[class=c_000]").text();
         String propertyRight = document.select("div[id=generalSituation] ul[class=general-item-right] li:eq(2) span[class=c_000]").text();
-        System.out.println(room);
-        System.out.println(area);
-        System.out.println(toward);
-        System.out.println(floor);
-        System.out.println(decoration);
-        System.out.println(propertyRight);
+//        System.out.println(room);
+//        System.out.println(area);
+//        System.out.println(toward);
+//        System.out.println(floor);
+//        System.out.println(decoration);
+//        System.out.println(propertyRight);
 
         String community = document.select("ul[class=house-basic-item3] li:eq(0) span:eq(1)").text();
         String region = document.select("ul[class=house-basic-item3] li:eq(1) span:eq(1)").text();
 
-        System.out.println("##########概述信息 generalDesc############");
+//        System.out.println("##########概述信息 generalDesc############");
         String generalDesc = document.select("div[id=generalDesc] div[class=genaral-pic-desc]:eq(0) p[class=pic-desc-word]").text();
         String houseNum = document.select("div[id=generalDesc] div[class=genaral-pic-desc]:eq(1) p[class=pic-desc-word]").text();
-        System.out.println(generalDesc);
-        System.out.println(houseNum);
-        System.out.println("#######联系方式############");
+//        System.out.println(generalDesc);
+//        System.out.println(houseNum);
+//        System.out.println("#######联系方式############");
         String phoneNum = document.select("[class=phone-num]").text();
-        System.out.println(phoneNum);
-        System.out.println("########首付参考##############");
+//        System.out.println(phoneNum);
+//        System.out.println("########首付参考##############");
         String downPayment = document.select("div[id=generalExpense] ul[class=general-item-right] li span[class=c_000]").text();
-        System.out.println(downPayment);
-        System.out.println("########（可能）发布日期##iso 8601格式 没带时区 可能默认是北京时间+08:00###############");
+//        System.out.println(downPayment);
+//        System.out.println("########（可能）发布日期##iso 8601格式 没带时区 可能默认是北京时间+08:00###############");
         String ldjson = document.select("script[type=application/ld+json]").html();
         JSONObject jsonObject = JSON.parseObject(ldjson);
         String pubDate = jsonObject.getString("pubDate");
-        System.out.println(pubDate);
+//        System.out.println(pubDate);
 
-        System.out.println("########小图url地址##############");
+//        System.out.println("########小图url地址##############");
         List<String> imgUrlList = new ArrayList<>(0);
         Elements elements = document.select("ul[id=smallPic] li");
         for (Element ele : elements) {
@@ -604,7 +602,7 @@ public class Application {
      */
     private static void randomSleep(int start, int end) throws Exception {
         Long sleepTime = CommonConstants.localRandom.nextLong(start * 1000L, end * 1000L);
-        Thread.sleep(sleepTime);
+//        Thread.sleep(sleepTime);
     }
 
     /**

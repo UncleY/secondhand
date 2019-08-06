@@ -15,19 +15,30 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 public class CommonConstants {
 
-    private static Map<String,String> FONT_SECRET = new ImmutableMap.Builder<String,String>()
-            .put("閏","0x958f")
-            .put("鸺","0x9e3a")
-            .put("麣","0x9ea3")
-            .put("餼","0x993c")
-            .put("鑶","0x9476")
-            .put("龤","0x9fa4")
-            .put("齤","0x9f64")
-            .put("龥","0x9fa5")
-            .put("龒","0x9f92")
-            .put("驋","0x9a4b")
+    public static Map<String, String> HEADER = new ImmutableMap.Builder<String, String>()
+            .put("Host", "webim.58.com")
+            .put("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+            .put("Accept-Language", "zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2")
+            .put("Accept-Encoding", "gzip, deflate, br")
+            .put("DNT", "1")
+            .put("Connection", "keep-alive")
+            .put("Upgrade-Insecure-Requests", "1")
+            .put("TE", "Trailers")
             .build();
-    
+
+    private static Map<String, String> FONT_SECRET = new ImmutableMap.Builder<String, String>()
+            .put("閏", "0x958f")
+            .put("鸺", "0x9e3a")
+            .put("麣", "0x9ea3")
+            .put("餼", "0x993c")
+            .put("鑶", "0x9476")
+            .put("龤", "0x9fa4")
+            .put("齤", "0x9f64")
+            .put("龥", "0x9fa5")
+            .put("龒", "0x9f92")
+            .put("驋", "0x9a4b")
+            .build();
+
     /**
      * 默认编码格式
      */
