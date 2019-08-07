@@ -141,9 +141,9 @@ public class Application {
 
                 // 每个列表页html内容存储到文件里 文件名为url
                 System.out.println(pnUrl);
-                Document document = JsoupUtils.connect(pnUrl).referrer("https://sy.58.com/?PGTID=0d40000c-02cf-b884-4f20-a9d4b1daa7bf&ClickID=1").ignoreHttpErrors(true).get();
+                // .referrer("https://sy.58.com/?PGTID=0d40000c-02cf-b884-4f20-a9d4b1daa7bf&ClickID=1")
+                String html = JsoupUtils.connect(pnUrl).execute().body();
                 // 获取 html
-                String html = document.html();
 
                 // 存储文件内容至class path下
                 File file = new File(parentPath + "/" + FILE_NAME_58_LIST_HTML + i + FILE_NAME_SUFFIX);
@@ -268,7 +268,7 @@ public class Application {
 
         List<String> pnList = new ArrayList<>(0);
         // 总共页数看数据是有70页  模拟造71页时没有数据显示了，最晚显示的是7-31的数据
-        int totalPage = 70;
+        int totalPage = 30;
         for (int i = 1; i < totalPage; i++) {
             String pnUrl = "https://sy.58.com/ershoufang/0/pn" + i + "/?ClickID=1";
             pnList.add(pnUrl);
