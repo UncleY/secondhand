@@ -40,6 +40,14 @@ public class HouseInfo58 implements Serializable {
 
     ////////////房源信息//////////////
     /**
+     * 是否新上房源
+     */
+    private String newInfo;
+    /**
+     * 更新时间
+     */
+    private String updateTime;
+    /**
      * 房源编号（不知道是房本号 还是58自己的编号）
      */
     private String houseNum;
@@ -97,7 +105,10 @@ public class HouseInfo58 implements Serializable {
      * 联系方式
      */
     private String phoneNum;
-
+    /**
+     * 概述信息
+     */
+    private String generalDesc;
 
     /**
      * 图片url地址

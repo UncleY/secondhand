@@ -55,13 +55,111 @@ public class Application {
 
     private static ThreadLocal<String> proxyIp = new ThreadLocal<String>();
 
+    public static void main(String[] args) throws Exception {
+
+//        HttpClientDownloader httpClientDownloader = new HttpClientDownloader();
+//
+//        List<String> proxyList = CommonConstants.PROXY_IP;
+//        Proxy[] proxies = new Proxy[proxyList.size()];
+//
+//        for (int i = 0; i < proxyList.size(); i++) {
+//            String proxyIP = proxyList.get(i);
+//            String ip = proxyIP.split(":")[0];
+//            String port = proxyIP.split(":")[1];
+//            proxies[i] = new Proxy(ip, Integer.parseInt(port));
+//        }
+//        httpClientDownloader.setProxyProvider(SimpleProxyProvider.from(proxies));
+
+
+//        String url = "https://sy.58.com/ershoufang/0/pn";
+//
+//        Spider spider = Spider.create(new WBPageProcessor());
+//        spider.setUUID("58info");
+//        // 加入url任务解析
+//        for (int i = 1; i <= 27; i++) {
+//            String pnUrl = url + i + "/?PGTID=0d100000-000b-c3ff-2926-c8b3f8f4fa4f&ClickID=1";
+//            spider.addUrl(pnUrl);
+//        }
+////        spider.setDownloader(httpClientDownloader);
+//        // 数据处理
+//        spider.addPipeline(new WBFilePipeline("d:/58html/"));
+//        spider.addPipeline(new WBPipeline());
+//
+//        SpiderMonitor monitor = SpiderMonitor.instance();
+//        monitor.register(spider);
+//        // 启动4线程爬取
+//        spider.thread(4).run();
+
+        //
+        File file = new File("d:/58html/5693a5ce-db7c-4ad3-874c-db2b228364d6/");
+        File[] files = file.listFiles();
+        List<HouseInfo58> info58List = new ArrayList<>(0);
+        for (File f : files) {
+            String html = FileUtils.readFileToString(f, CommonConstants.ENCODING);
+            HouseInfo58 info58 = parse58Info(html);
+            info58List.add(info58);
+        }
+
+        List<String[]> dataList = new ArrayList<>(0);
+
+        info58List.stream()
+                .forEach(model -> {
+                    dataList.add(new String[]{
+                            model.getInfoUrl(),
+                            model.getHeadTitle(),
+                            model.getMetaDescription(),
+                            model.getMetaCanonical(),
+                            model.getPubDate(),
+                            model.getNewInfo(),
+                            model.getUpdateTime(),
+                            model.getHouseNum(),
+                            model.getTitle(),
+                            model.getDownPayment(),
+                            model.getTotalPrice(),
+                            model.getPerSquare(),
+                            model.getRoom(),
+                            model.getArea(),
+                            model.getToward(),
+                            model.getFloor(),
+                            model.getDecoration(),
+                            model.getPropertyRight(),
+                            model.getCommunity(),
+                            model.getRegion(),
+                            model.getPhoneNum(),
+                            model.getGeneralDesc(),
+                            JSON.toJSONString(model.getImgUrlList())
+                    });
+                });
+
+
+        String[] title58 = new String[]{"详情页url", "title", "description", "规范url地址", "发布日期",
+                "新上房源","更新时间",
+                "房源编号", "标题", "首付参考", "总价", "单价",
+                "户型结构", "建筑面积", "户型朝向", "所属楼层", "装修情况", "产权情况", "小区", "位置", "联系方式", "概述信息", "图片url地址（jsonArray）"};
+
+        XSSFWorkbook workbook = new XSSFWorkbook();
+        ExcelUtil.make2007Excel(workbook, "58", title58, dataList);
+        ExcelUtil.make2007Excel(workbook, "517", title58, dataList);
+
+        String todayString = new DateTime().toString("yyyyMMdd");
+        File excel = new File("D:/ershoufang" + todayString + ".xlsx");
+        FileUtils.touch(excel);
+        FileOutputStream output = FileUtils.openOutputStream(excel);
+
+        workbook.write(output);
+        output.flush();
+        output.close();
+
+        workbook.close();
+    }
+
     /**
      * 有点思路了，先列表url不用存储。将每一页的html都存储起来
      *
      * @param args
      * @throws Exception
      */
-    public static void main(String[] args) throws Exception {
+    public static void main222(String[] args) throws Exception {
 
         // 第一步 缓存本地列表页面 每页有128条数据
         create58InfoListFile();
@@ -99,14 +197,15 @@ public class Application {
                             model.getCommunity(),
                             model.getRegion(),
                             model.getPhoneNum(),
+                            model.getGeneralDesc(),
                             JSON.toJSONString(model.getImgUrlList())
                     });
                 });
 
 
-        String[] title58 = new String[]{"详情页url", "title", "description", "规范url地址", "发布日期", "房源编号", "标题", "首付参考", "总价", "单价", "户型结构", "建筑面积", "户型朝向", "所属楼层", "装修情况", "产权情况", "小区", "位置", "联系方式", "图片url地址（jsonArray）"};
+        String[] title58 = new String[]{"详情页url", "title", "description", "规范url地址", "发布日期", "房源编号", "标题", "首付参考", "总价", "单价", "户型结构", "建筑面积", "户型朝向", "所属楼层", "装修情况", "产权情况", "小区", "位置", "联系方式", "概述信息", "图片url地址（jsonArray）"};
 
-        XSSFWorkbook workbook = ExcelUtil.make2007Excel("58", title58, dataList);
+        XSSFWorkbook workbook = ExcelUtil.make2007Excel(null, "58", title58, dataList);
 
         String todayString = new DateTime().toString("yyyyMMdd_HHmmss");
         File file = new File("D:/ershoufang" + todayString + ".xlsx");
@@ -291,7 +390,7 @@ public class Application {
 
         String[] title58 = new String[]{"详情页url", "标题", "meta描述", "总价"};
 
-        XSSFWorkbook workbook = ExcelUtil.make2007Excel("58", title58, dataList);
+        XSSFWorkbook workbook = ExcelUtil.make2007Excel(null, "58", title58, dataList);
 
         File file = new File("D:/ershoufang.xls");
         FileUtils.touch(file);
@@ -406,22 +505,19 @@ public class Application {
         Document document = JsoupUtils.parse(html);
 //        System.out.println("######head title########################");
         String headTitle = document.select("html head title").text();
-//        System.out.println(headTitle);
+        String newInfo = document.select("html body div.main-wrap div.house-title p.house-update-info span.ts").text();
+        String updateTime = document.select("html body div.main-wrap div.house-title p.house-update-info span.up").text();
+//        String totalCount = document.select("html body div.main-wrap div.house-title p.house-update-info span.up").text();
         String canonical = document.select("html head link[rel=canonical]").attr("href");
-//        System.out.println(canonical);
 //        System.out.println("######meta content############");
         String content = document.select("html head meta[name='description']").attr("content");
-//        System.out.println(content);
 
         Optional<String> count = Stream.of(content.split(";")[1].split("；")).filter(o -> StringUtils.startsWith(o, "售价：")).findFirst();
         String totalPrice = count.get();
-//        System.out.println(totalPrice);
 
         String perSquare = totalPrice.substring(totalPrice.indexOf("（") + 1, totalPrice.lastIndexOf("元"));
-//        System.out.println(perSquare);
 //        System.out.println("######title ############");
         String title = document.select("div[class=house-title] h1[class=c_333 f20]").text();
-//        System.out.println(title);
 //        System.out.println("#######房子结构信息 generalSituation###########");
         String room = document.select("div[id=generalSituation] ul[class=general-item-left] li:eq(1) span[class=c_000]").text();
         String area = document.select("div[id=generalSituation] ul[class=general-item-left] li:eq(2) span[class=c_000]").text();
@@ -430,12 +526,6 @@ public class Application {
         String floor = document.select("div[id=generalSituation] ul[class=general-item-right] li:eq(0) span[class=c_000]").text();
         String decoration = document.select("div[id=generalSituation] ul[class=general-item-right] li:eq(1) span[class=c_000]").text();
         String propertyRight = document.select("div[id=generalSituation] ul[class=general-item-right] li:eq(2) span[class=c_000]").text();
-//        System.out.println(room);
-//        System.out.println(area);
-//        System.out.println(toward);
-//        System.out.println(floor);
-//        System.out.println(decoration);
-//        System.out.println(propertyRight);
 
         String community = document.select("ul[class=house-basic-item3] li:eq(0) span:eq(1)").text();
         String region = document.select("ul[class=house-basic-item3] li:eq(1) span:eq(1)").text();
@@ -443,19 +533,14 @@ public class Application {
 //        System.out.println("##########概述信息 generalDesc############");
         String generalDesc = document.select("div[id=generalDesc] div[class=genaral-pic-desc]:eq(0) p[class=pic-desc-word]").text();
         String houseNum = document.select("div[id=generalDesc] div[class=genaral-pic-desc]:eq(1) p[class=pic-desc-word]").text();
-//        System.out.println(generalDesc);
-//        System.out.println(houseNum);
 //        System.out.println("#######联系方式############");
         String phoneNum = document.select("[class=phone-num]").text();
-//        System.out.println(phoneNum);
 //        System.out.println("########首付参考##############");
         String downPayment = document.select("div[id=generalExpense] ul[class=general-item-right] li span[class=c_000]").text();
-//        System.out.println(downPayment);
 //        System.out.println("########（可能）发布日期##iso 8601格式 没带时区 可能默认是北京时间+08:00###############");
         String ldjson = document.select("script[type=application/ld+json]").html();
         JSONObject jsonObject = JSON.parseObject(ldjson);
         String pubDate = jsonObject.getString("pubDate");
-//        System.out.println(pubDate);
 
 //        System.out.println("########小图url地址##############");
         List<String> imgUrlList = new ArrayList<>(0);
@@ -474,6 +559,8 @@ public class Application {
                 .metaDescription(content)
                 .metaCanonical(canonical)
                 .pubDate(pubDate)
+                .newInfo(newInfo)
+                .updateTime(updateTime)
                 .houseNum(houseNum)
                 .title(title)
                 .downPayment(downPayment)
@@ -488,6 +575,7 @@ public class Application {
                 .community(community)
                 .region(region)
                 .phoneNum(phoneNum)
+                .generalDesc(generalDesc)
                 .imgUrlList(imgUrlList)
                 .build();
         return model;

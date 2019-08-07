@@ -150,13 +150,15 @@ public class CommonConstants {
                 if (StringUtils.indexOf(s, "上限") != -1) {
                     log.error("http.tiqu.qingjuhe.cn获取随机代理今日20个已上限了->{}", s);
                     log.info("下血本花钱包周了");
-                    s = getProxyIp("http://http.tiqu.qingjuhe.cn/getip?num=10&type=1&pack=35871&port=11&lb=1&pb=4&regions=110000,130000,140000,150000,210000,310000,320000,330000,340000,350000,360000,370000,410000,430000,440000,500000,510000,530000,610000,620000,640000");
+//                    s = getProxyIp("http://http.tiqu.qingjuhe.cn/getip?num=10&type=1&pack=35871&port=11&lb=1&pb=4&regions=110000,130000,140000,150000,210000,310000,320000,330000,340000,350000,360000,370000,410000,430000,440000,500000,510000,530000,610000,620000,640000");
+                    s = getProxyIp("http://http.tiqu.qingjuhe.cn/getip?num=5&type=1&pack=35872&port=11&lb=1&pb=4&regions=110000,130000,140000,150000,210000,310000,320000,330000,340000,350000,360000,370000,410000,430000,440000,500000,510000,530000,610000,620000,640000");
                     if (StringUtils.indexOf(s, "上限") != -1) {
                         log.error("收费代理到期：老哥，充钱吧！->{}", s);
                         return;
                     }
                 }
             }
+            log.info(s);
             String[] strings = s.split("\r\n");
             ipList.addAll(Arrays.asList(strings));
             if (CollectionUtils.isNotEmpty(ipList)) {
