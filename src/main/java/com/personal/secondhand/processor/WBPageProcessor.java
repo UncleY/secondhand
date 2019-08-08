@@ -38,6 +38,7 @@ public class WBPageProcessor implements PageProcessor {
             .addHeader("Connection", "keep-alive")
             .addHeader("TE", "Trailers")
             .setRetryTimes(3)
+            .setCycleRetryTimes(3)
             .setTimeOut(CommonConstants.TIME_OUT)
             .setSleepTime(3000)
             .setCycleRetryTimes(5);
@@ -51,11 +52,17 @@ public class WBPageProcessor implements PageProcessor {
         if (url.indexOf("x.shtml") != -1) {
             // 正则有点弱，https://sy.58.com/ershoufang/十四位数字x.shtml?*
             log.info("详情页");
-            HouseInfo58 model = Application.parse58Info(page.getHtml().get());
-            // 放入model 让WBPipeline处理
-            page.putField("model", model);
-            // 放入html 让WBFilePipeline处理
-            page.putField("html", page.getHtml().toString());
+            try {
+                HouseInfo58 model = Application.parse58Info(page.getHtml().get());
+                // 放入model 让WBPipeline处理
+                page.putField("model", model);
+                // 放入html 让WBFilePipeline处理
+                page.putField("html", page.getHtml().toString());
+            } catch (Exception e) {
+                log.error("", e);
+                page.addTargetRequest(page.getRequest());
+            }
+
 
         } else if (StringUtils.startsWith(url, "https://sy.58.com/ershoufang/0/pn")) {
             log.info("列表页");

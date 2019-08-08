@@ -55,7 +55,7 @@ public class Application {
 
     private static ThreadLocal<String> proxyIp = new ThreadLocal<String>();
 
-    public static void main(String[] args) throws Exception {
+    public static void main333(String[] args) throws Exception {
 
 //        HttpClientDownloader httpClientDownloader = new HttpClientDownloader();
 //
@@ -133,7 +133,7 @@ public class Application {
 
 
         String[] title58 = new String[]{"详情页url", "title", "description", "规范url地址", "发布日期",
-                "新上房源","更新时间",
+                "新上房源", "更新时间",
                 "房源编号", "标题", "首付参考", "总价", "单价",
                 "户型结构", "建筑面积", "户型朝向", "所属楼层", "装修情况", "产权情况", "小区", "位置", "联系方式", "概述信息", "图片url地址（jsonArray）"};
 
@@ -512,10 +512,9 @@ public class Application {
 //        System.out.println("######meta content############");
         String content = document.select("html head meta[name='description']").attr("content");
 
-        Optional<String> count = Stream.of(content.split(";")[1].split("；")).filter(o -> StringUtils.startsWith(o, "售价：")).findFirst();
-        String totalPrice = count.get();
+        String totalPrice = StringUtils.substring(content, content.indexOf("售价：") , content.indexOf("；"));
+        String perSquare = StringUtils.substring(content, content.indexOf("（") + 1, content.indexOf("）"));
 
-        String perSquare = totalPrice.substring(totalPrice.indexOf("（") + 1, totalPrice.lastIndexOf("元"));
 //        System.out.println("######title ############");
         String title = document.select("div[class=house-title] h1[class=c_333 f20]").text();
 //        System.out.println("#######房子结构信息 generalSituation###########");
