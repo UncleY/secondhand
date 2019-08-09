@@ -1,6 +1,7 @@
 package com.personal.secondhand.processor;
 
 import com.personal.secondhand.constants.CommonConstants;
+import com.personal.secondhand.download.MGDownloader;
 import com.personal.secondhand.pipeline.FileInfoPipeline;
 import com.personal.secondhand.pipeline.FilePagePipeline;
 import com.personal.secondhand.util.JsoupUtils;
@@ -28,26 +29,26 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class MGPageProcessor implements PageProcessor {
 
-    // new的话会出现多个进程
-    private static WebDriver driver;
-
-    static {
-        System.setProperty("phantomjs.binary.path", "D:\\yangrui\\git\\secondhand\\party\\phantomjs.exe");
-        DesiredCapabilities capabilities = DesiredCapabilities.chrome();
-        capabilities.setCapability("takesScreenshot", true);
-        capabilities.setCapability("phantomjs.page.settings.loadImages", false);
-        capabilities.setCapability("phantomjs.page.settings.disk-cache", false);
-        capabilities.setCapability(PhantomJSDriverService.PHANTOMJS_CLI_ARGS, new String[]{
-                "--web-security=false",
-                "--ssl-protocol=any",
-                "--ignore-ssl-errors=true",
-                "--load-images=false",
-//                "--webdriver-loglevel=DEBUG"
-        });
-        capabilities.setJavascriptEnabled(true);
-        driver = new PhantomJSDriver(capabilities);
-        driver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
-    }
+//    // new的话会出现多个进程
+//    private static WebDriver driver;
+//
+//    static {
+//        System.setProperty("phantomjs.binary.path", "D:\\yangrui\\git\\secondhand\\party\\phantomjs.exe");
+//        DesiredCapabilities capabilities = DesiredCapabilities.chrome();
+//        capabilities.setCapability("takesScreenshot", true);
+//        capabilities.setCapability("phantomjs.page.settings.loadImages", false);
+//        capabilities.setCapability("phantomjs.page.settings.disk-cache", false);
+//        capabilities.setCapability(PhantomJSDriverService.PHANTOMJS_CLI_ARGS, new String[]{
+//                "--web-security=false",
+//                "--ssl-protocol=any",
+//                "--ignore-ssl-errors=true",
+//                "--load-images=false",
+////                "--webdriver-loglevel=DEBUG"
+//        });
+//        capabilities.setJavascriptEnabled(true);
+//        driver = new PhantomJSDriver(capabilities);
+//        driver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
+//    }
 
     private Site site = Site.me()
             .setCharset(CommonConstants.ENCODING)
@@ -68,10 +69,10 @@ public class MGPageProcessor implements PageProcessor {
     @Override
     public void process(Page page) {
         String url = page.getUrl().get();
-//        String html = page.getHtml().get();
+        String html = page.getHtml().get();
 //        System.out.println(html);
-        driver.get(url);
-        String html = driver.getPageSource();
+//        driver.get(url);
+//        String html = driver.getPageSource();
         if (StringUtils.indexOf(html, "正在加载......") != -1
                 || StringUtils.indexOf(html, "应用程序中的服务器错误") != -1
                 || StringUtils.indexOf(html, "upstream_status:504") != -1
@@ -150,17 +151,16 @@ public class MGPageProcessor implements PageProcessor {
 
         // 1~100 除了6个推荐位都是今日更新
 //        String url = "https://www.517.cn/ershoufang/osj1/area/pg";
-        String today = new DateTime().toString("yyyyMMdd");
-        Spider spider = Spider.create(new MGPageProcessor())
-                .setUUID(today);
+        String today = "12345678";
+        Spider spider = Spider.create(new MGPageProcessor());
 
-
-        int startPage = 97;
-        int endPage = 100;
-        String downloadPath = "d:/517html/pc/";
+        int startPage = 1;
+        int endPage = 10;
+        String downloadPath = "d:/517html/pc/" + today;
         for (int i = startPage; i <= endPage; i++) {
             spider.addUrl("https://www.517.cn/ershoufang/osj1/area/pg" + i + "/?ckattempt=1");
         }
+        spider.setDownloader(new MGDownloader());
         spider.addPipeline(new FilePagePipeline(downloadPath));
         spider.addPipeline(new FileInfoPipeline(downloadPath));
 //        spider.setDownloader(new PhantomJSDownloader("D:\\yangrui\\git\\secondhand\\party\\phantomjs.exe","D:\\yangrui\\git\\secondhand\\party\\crawl.js"));
