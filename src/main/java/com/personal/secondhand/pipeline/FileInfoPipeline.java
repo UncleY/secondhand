@@ -2,6 +2,7 @@ package com.personal.secondhand.pipeline;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateTime;
 import us.codecraft.webmagic.ResultItems;
 import us.codecraft.webmagic.Task;
 import us.codecraft.webmagic.pipeline.FilePipeline;
@@ -11,6 +12,9 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 
+/**
+ * 公共的详情页面下载到本地
+ */
 @Slf4j
 public class FileInfoPipeline extends FilePipeline {
     public FileInfoPipeline() {
@@ -31,9 +35,10 @@ public class FileInfoPipeline extends FilePipeline {
         }
         String url = resultItems.getRequest().getUrl();
         url = url.replaceAll("https://", "").replaceAll("\\?", "#").replaceAll("/", "_");
-        System.out.println(url);
+        // 文件命名为url路径，替换文件命名不符合的情况后形式如：
         // 以下内容参考至FilePipeline#process 替换了写入内容
-        String path = super.path + PATH_SEPERATOR + "infoHtml" + PATH_SEPERATOR + url ;
+        String today = new DateTime().toString("yyyyMMdd");
+        String path = super.path + PATH_SEPERATOR + today + PATH_SEPERATOR + "infoHtml" + PATH_SEPERATOR + url;
         try {
 //            PrintWriter printWriter = new PrintWriter(new OutputStreamWriter(new FileOutputStream(this.getFile(path + DigestUtils.md5Hex(resultItems.getRequest().getUrl()) + ".html")), "UTF-8"));
             PrintWriter printWriter = new PrintWriter(new OutputStreamWriter(new FileOutputStream(this.getFile(path + ".html")), "UTF-8"));

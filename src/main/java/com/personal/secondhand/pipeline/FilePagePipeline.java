@@ -2,6 +2,7 @@ package com.personal.secondhand.pipeline;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateTime;
 import us.codecraft.webmagic.ResultItems;
 import us.codecraft.webmagic.Task;
 import us.codecraft.webmagic.pipeline.FilePipeline;
@@ -31,9 +32,9 @@ public class FilePagePipeline extends FilePipeline {
         }
         String url = resultItems.getRequest().getUrl();
         url = url.replaceAll("https://", "").replaceAll("\\?", "#").replaceAll("/", "_");
-        System.out.println(url);
         // 以下内容参考至FilePipeline#process 替换了写入内容
-        String path = super.path + PATH_SEPERATOR + "pageHtml" + PATH_SEPERATOR + url ;
+        String today = new DateTime().toString("yyyyMMdd");
+        String path = super.path + PATH_SEPERATOR + today + PATH_SEPERATOR + "pageHtml" + PATH_SEPERATOR + url;
         try {
 //            PrintWriter printWriter = new PrintWriter(new OutputStreamWriter(new FileOutputStream(this.getFile(path + DigestUtils.md5Hex(resultItems.getRequest().getUrl()) + ".html")), "UTF-8"));
             PrintWriter printWriter = new PrintWriter(new OutputStreamWriter(new FileOutputStream(this.getFile(path + ".html")), "UTF-8"));

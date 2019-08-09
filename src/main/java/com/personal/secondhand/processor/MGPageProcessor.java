@@ -5,6 +5,7 @@ import com.personal.secondhand.pipeline.FileInfoPipeline;
 import com.personal.secondhand.pipeline.FilePagePipeline;
 import com.personal.secondhand.util.JsoupUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.jsoup.nodes.Document;
@@ -27,15 +28,15 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class MGPageProcessor implements PageProcessor {
 
-    private static String startHtml = "https://www.517.cn/ershoufang/pn1?ckattempt=1";
-
     // new的话会出现多个进程
     private static WebDriver driver;
 
     static {
-        System.setProperty("phantomjs.binary.path", "F:\\workspace\\secondhand\\party\\phantomjs.exe");
-        DesiredCapabilities capabilities = new DesiredCapabilities();
-        capabilities.setCapability("takesScreenshot", false);
+        System.setProperty("phantomjs.binary.path", "D:\\yangrui\\git\\secondhand\\party\\phantomjs.exe");
+        DesiredCapabilities capabilities = DesiredCapabilities.chrome();
+        capabilities.setCapability("takesScreenshot", true);
+        capabilities.setCapability("phantomjs.page.settings.loadImages", false);
+        capabilities.setCapability("phantomjs.page.settings.disk-cache", false);
         capabilities.setCapability(PhantomJSDriverService.PHANTOMJS_CLI_ARGS, new String[]{
                 "--web-security=false",
                 "--ssl-protocol=any",
@@ -45,6 +46,7 @@ public class MGPageProcessor implements PageProcessor {
         });
         capabilities.setJavascriptEnabled(true);
         driver = new PhantomJSDriver(capabilities);
+        driver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
     }
 
     private Site site = Site.me()
@@ -66,13 +68,17 @@ public class MGPageProcessor implements PageProcessor {
     @Override
     public void process(Page page) {
         String url = page.getUrl().get();
+//        String html = page.getHtml().get();
+//        System.out.println(html);
         driver.get(url);
-        driver.manage().timeouts().implicitlyWait(20, TimeUnit.SECONDS);
         String html = driver.getPageSource();
-        if (StringUtils.indexOf(html, "正在加载......") != -1) {
+        if (StringUtils.indexOf(html, "正在加载......") != -1
+                || StringUtils.indexOf(html, "应用程序中的服务器错误") != -1
+                || StringUtils.indexOf(html, "upstream_status:504") != -1
+                ) {
             // 未加载完全 休眠一会在扔回任务里
             try {
-                Thread.sleep(2000L);
+                Thread.sleep(3000L);
             } catch (Exception e) {
                 log.error("休眠异常", e);
             }
@@ -80,26 +86,38 @@ public class MGPageProcessor implements PageProcessor {
 
         } else if (StringUtils.startsWith(url, "https://www.517.cn/ershoufang/osj1/area/pg")) {
             log.info("列表页面{}", url);
-
             Document document = JsoupUtils.parse(html);
+
             Elements elements = document.select("div[class=ListBox-I clearfix]");
-            for (Element ele : elements) {
-                String nextUrl = ele.select("div[class=LB-f-img] a").attr("href");
-//                String linkman = ele.select("div[class=price] p[class=P-gx] a").attr("href");
-//                String pid = linkman.replaceAll("/s", "").replaceAll("/", "");
-                page.addTargetRequest(nextUrl);
+            if (CollectionUtils.isEmpty(elements)) {
+                System.out.println("页面没有列表信息-" + url);
+                // 页面没加载完全
+                try {
+                    Thread.sleep(3000L);
+                } catch (Exception e) {
+                    log.error("休眠异常", e);
+                }
+                // 页面没加载完全
+                page.addTargetRequest(url);
+            } else {
+                for (Element ele : elements) {
+                    String nextUrl = ele.select("div[class=LB-f-img] a").attr("href");
+                    // 放入详情url
+                    page.addTargetRequest(nextUrl);
+                }
+                // 存储本地列表页
+                page.putField("pageHtml", html);
             }
 
-            page.putField("pageHtml", html);
 
         } else if (page.getUrl().regex("https://www\\.517\\.cn/ershoufang/[0-9]{7}/*").match()) {
             log.info("详情页{}", url);
             Document document = JsoupUtils.parse(html);
             String cssPath = "html.ng-scope body.ng-scope form#form1.ng-pristine.ng-valid div.mainwrapper div.houseBOX.width960 div.h-public.clearfix div.h-info-box div.m-jjr.clearfix div.m-jjr-nt div.m-jjr-o.clearfix ul li.m-jjr-name a";
             String pid = document.select(cssPath).attr("href");
-            System.out.println(pid);
+//            System.out.println(pid);
             page.putField("infoHtml", html);
-            page.putField("pid", pid);
+//            page.putField("pid", pid);
         } else {
             log.error("未知页面{}", url);
         }
@@ -129,33 +147,6 @@ public class MGPageProcessor implements PageProcessor {
 //    }
 
     public static void main(String[] args) throws Exception {
-//        long s = System.currentTimeMillis();
-//        WebDriver driver;
-        //火狐的安装位置
-//        System.setProperty("webdriver.firefox.bin", "E:\\software\\firefox\\firefox.exe");
-        //加载驱动
-//        System.setProperty("webdriver.firefox.marionette", "F:\\development\\geckodriver.exe");
-
-//        DesiredCapabilities capabilities = new DesiredCapabilities();
-//        capabilities.setCapability("--web-security","false");
-//        capabilities.setCapability("--ssl-protocol","any");
-//        capabilities.setCapability("--ignore-ssl-errors","true");
-//        capabilities.setCapability("--load-images","false");
-//        driver = new PhantomJSDriver(capabilities);
-
-//        PhantomJSDriver jsDriver = new PhantomJSDriver();
-
-//        cliArgsCap.add("--web-security=false");
-//        cliArgsCap.add("--ssl-protocol=any");
-//        cliArgsCap.add("--ignore-ssl-errors=true");
-//        cliArgsCap.add("--load-images=false"); //不加载图片
-
-//        driver.get("https://www.517.cn/ershoufang/osj1/area/pg1");
-//        String html = driver.getPageSource();
-//        System.out.println(html);
-//
-//        long e = System.currentTimeMillis();
-//        System.out.println((e-s)/1000.000);
 
         // 1~100 除了6个推荐位都是今日更新
 //        String url = "https://www.517.cn/ershoufang/osj1/area/pg";
@@ -164,12 +155,16 @@ public class MGPageProcessor implements PageProcessor {
                 .setUUID(today);
 
 
-        for (int i = 1; i <= 100; i++) {
-            spider.addUrl("https://www.517.cn/ershoufang/osj1/area/pg" + i + "?ckattempt=1");
+        int startPage = 97;
+        int endPage = 100;
+        String downloadPath = "d:/517html/pc/";
+        for (int i = startPage; i <= endPage; i++) {
+            spider.addUrl("https://www.517.cn/ershoufang/osj1/area/pg" + i + "/?ckattempt=1");
         }
-        spider.addPipeline(new FilePagePipeline("d:/517html/" + today));
-        spider.addPipeline(new FileInfoPipeline("d:/517html/" + today));
-        spider.thread(4);
+        spider.addPipeline(new FilePagePipeline(downloadPath));
+        spider.addPipeline(new FileInfoPipeline(downloadPath));
+//        spider.setDownloader(new PhantomJSDownloader("D:\\yangrui\\git\\secondhand\\party\\phantomjs.exe","D:\\yangrui\\git\\secondhand\\party\\crawl.js"));
+        spider.thread((Runtime.getRuntime().availableProcessors() - 1) << 1);
         spider.run();
 
     }
