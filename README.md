@@ -35,7 +35,7 @@ ps:最新版的selenium不再支持phantomjs
 2019-8-11  
 1）按每页N条数据*M页的总数，可能会有漏爬几个详情页，暂未找到原因。  
 
-2）win10 下webDriver池里的phantom.exe总关闭不了（占用内存高）  
+2）win10 下webDriver池里的phantom.exe个别情况关闭不了（占用内存高）  
 
 
 
