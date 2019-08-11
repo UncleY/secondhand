@@ -82,8 +82,8 @@ public class Application {
 //        }
 ////        spider.setDownloader(httpClientDownloader);
 //        // 数据处理
-//        spider.addPipeline(new WBFilePipeline("d:/58html/"));
-//        spider.addPipeline(new WBPipeline());
+//        spider.addPipeline(new FileInfoPipeline("d:/58html/"));
+//        spider.addPipeline(new FilePagePipeline("d:/58html/"));
 //
 //        SpiderMonitor monitor = SpiderMonitor.instance();
 //        monitor.register(spider);
