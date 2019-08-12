@@ -1,20 +1,18 @@
 package com.personal.secondhand.constants;
 
-import org.apache.log4j.Logger;
+import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.phantomjs.PhantomJSDriver;
 import org.openqa.selenium.phantomjs.PhantomJSDriverService;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
-import java.io.FileReader;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Properties;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
@@ -22,11 +20,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author code4crafter@gmail.com <br>
- *         Date: 13-7-26 <br>
- *         Time: 下午1:41 <br>
+ * Date: 13-7-26 <br>
+ * Time: 下午1:41 <br>
  */
+@Slf4j
 public class WebDriverPool {
-    private Logger logger = Logger.getLogger(getClass());
 
     private final static int DEFAULT_CAPACITY = 5;
 
@@ -63,10 +61,10 @@ public class WebDriverPool {
     public void configure() throws IOException {
         // Read config file
 //        sConfig = new Properties();
-        String configFile = DEFAULT_CONFIG_FILE;
-        if (System.getProperty("selenuim_config") != null) {
-            configFile = System.getProperty("selenuim_config");
-        }
+//        String configFile = DEFAULT_CONFIG_FILE;
+//        if (System.getProperty("selenuim_config")!=null){
+//            configFile = System.getProperty("selenuim_config");
+//        }
 //        sConfig.load(new FileReader(configFile));
 
         // Prepare capabilities
@@ -77,8 +75,8 @@ public class WebDriverPool {
         String driver = DRIVER_PHANTOMJS;//sConfig.getProperty("driver", DRIVER_PHANTOMJS);
 
         // Fetch PhantomJS-specific configuration parameters
-        if (driver.equals(DRIVER_PHANTOMJS)) {
-            // "phantomjs_exec_path"
+//        if (driver.equals(DRIVER_PHANTOMJS)) {
+//            // "phantomjs_exec_path"
 //            if (sConfig.getProperty("phantomjs_exec_path") != null) {
 //                sCaps.setCapability(
 //                        PhantomJSDriverService.PHANTOMJS_EXECUTABLE_PATH_PROPERTY,
@@ -96,9 +94,10 @@ public class WebDriverPool {
 //                        PhantomJSDriverService.PHANTOMJS_GHOSTDRIVER_PATH_PROPERTY,
 //                        sConfig.getProperty("phantomjs_driver_path"));
 //            } else {
-            System.out.println("Test will use PhantomJS internal GhostDriver");
+//                System.out
+//                        .println("Test will use PhantomJS internal GhostDriver");
 //            }
-        }
+//        }
 
         // Disable "web-security", enable all possible "ssl-protocols" and
         // "ignore-ssl-errors" for PhantomJSDriver
@@ -113,16 +112,11 @@ public class WebDriverPool {
         cliArgsCap.add("--web-security=false");
         cliArgsCap.add("--ssl-protocol=any");
         cliArgsCap.add("--ignore-ssl-errors=true");
-        cliArgsCap.add("--load-images=false");
-        sCaps.setCapability("takesScreenshot", false);
-        sCaps.setCapability("phantomjs.page.settings.loadImages", false);
-        sCaps.setCapability("phantomjs.page.settings.disk-cache", false);
         sCaps.setCapability(PhantomJSDriverService.PHANTOMJS_CLI_ARGS,
                 cliArgsCap);
 
         // Control LogLevel for GhostDriver, via CLI arguments
-        sCaps.setCapability(
-                PhantomJSDriverService.PHANTOMJS_GHOSTDRIVER_CLI_ARGS,
+        sCaps.setCapability(PhantomJSDriverService.PHANTOMJS_GHOSTDRIVER_CLI_ARGS,
                 new String[]{"--logLevel=INFO"});
 
         // String driver = sConfig.getProperty("driver", DRIVER_PHANTOMJS);
@@ -160,7 +154,8 @@ public class WebDriverPool {
     /**
      * store webDrivers created
      */
-    private List<WebDriver> webDriverList = Collections.synchronizedList(new ArrayList<WebDriver>());
+    private List<WebDriver> webDriverList = Collections
+            .synchronizedList(new ArrayList<WebDriver>());
 
     /**
      * store webDrivers available
@@ -226,7 +221,7 @@ public class WebDriverPool {
             throw new IllegalStateException("Already closed!");
         }
         for (WebDriver webDriver : webDriverList) {
-            logger.info("Quit webDriver" + webDriver);
+            log.info("Quit webDriver" + webDriver);
             webDriver.quit();
             webDriver = null;
         }

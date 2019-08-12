@@ -1,7 +1,6 @@
 package com.personal.secondhand.constants;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.FileUtils;
@@ -12,7 +11,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -23,6 +21,15 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 @Slf4j
 public class CommonConstants {
+    /**
+     * html文件下载存储路径
+     */
+    public static final String DOWNLOAD_FILE_PATH = "d:/spider/";
+    /**
+     * phantomjs.exe所在物理路径
+     */
+    public static final String PHANTOM_JS_EXE_PATH = "F:\\workspace\\secondhand\\party\\phantomjs.exe";
+
     /**
      * 随机种子
      */
@@ -74,6 +81,10 @@ public class CommonConstants {
      * timeout 默认30秒
      */
     public static final int TIME_OUT = 30000;
+    /**
+     * 睡眠时间 默认3秒
+     */
+    public static final int SLEEP_TIME = 3000;
 
     /**
      * ip proxy
@@ -92,31 +103,6 @@ public class CommonConstants {
             log.error("【加载代理ip文件异常】", e);
         }
     }
-
-    public static Map<String, String> HEADER = new ImmutableMap.Builder<String, String>()
-            .put("Host", "webim.58.com")
-            .put("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
-            .put("Accept-Language", "zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2")
-            .put("Accept-Encoding", "gzip, deflate, br")
-            .put("DNT", "1")
-            .put("Connection", "keep-alive")
-            .put("Upgrade-Insecure-Requests", "1")
-            .put("TE", "Trailers")
-            .build();
-
-    private static Map<String, String> FONT_SECRET = new ImmutableMap.Builder<String, String>()
-            .put("閏", "0x958f")
-            .put("鸺", "0x9e3a")
-            .put("麣", "0x9ea3")
-            .put("餼", "0x993c")
-            .put("鑶", "0x9476")
-            .put("龤", "0x9fa4")
-            .put("齤", "0x9f64")
-            .put("龥", "0x9fa5")
-            .put("龒", "0x9f92")
-            .put("驋", "0x9a4b")
-            .build();
-
 
     /**
      * 获取随机user agent
@@ -142,22 +128,25 @@ public class CommonConstants {
     public static void createProxyIpFile() {
         List<String> ipList = new ArrayList<>(0);
         try {
-            String s = getProxyIp("http://api.xedl.321194.com/getip?num=1&type=1&port=11&pack=4055&ts=0&cs=1&lb=1");
-            if (StringUtils.indexOf(s, "您的套餐今日已到达上限") != -1) {
-                log.error("api.xedl.321194.com获取50个随机代理今日已上限->{}", s);
-                // 这个代理是每天20个
-                s = getProxyIp("http://http.tiqu.qingjuhe.cn/getip?num=1&type=1&pack=35869&port=11&lb=1&pb=4&regions=110000,130000,140000,150000,210000,310000,320000,330000,340000,350000,360000,370000,410000,430000,440000,500000,510000,530000,610000,620000,640000");
-                if (StringUtils.indexOf(s, "上限") != -1) {
-                    log.error("http.tiqu.qingjuhe.cn获取随机代理今日20个已上限了->{}", s);
-                    log.info("下血本花钱包周了");
-//                    s = getProxyIp("http://http.tiqu.qingjuhe.cn/getip?num=10&type=1&pack=35871&port=11&lb=1&pb=4&regions=110000,130000,140000,150000,210000,310000,320000,330000,340000,350000,360000,370000,410000,430000,440000,500000,510000,530000,610000,620000,640000");
-                    s = getProxyIp("http://http.tiqu.qingjuhe.cn/getip?num=5&type=1&pack=35872&port=11&lb=1&pb=4&regions=110000,130000,140000,150000,210000,310000,320000,330000,340000,350000,360000,370000,410000,430000,440000,500000,510000,530000,610000,620000,640000");
+            String s = "";
+
+
+//            s = getProxyIp("http://api.xedl.321194.com/getip?num=1&type=1&port=11&pack=4055&ts=0&cs=1&lb=1");
+//            if (StringUtils.indexOf(s, "您的套餐今日已到达上限") != -1) {
+//                log.error("api.xedl.321194.com获取50个随机代理今日已上限->{}", s);
+//                // 这个代理是每天20个
+//                s = getProxyIp("http://http.tiqu.qingjuhe.cn/getip?num=1&type=1&pack=35869&port=11&lb=1&pb=4&regions=110000,130000,140000,150000,210000,310000,320000,330000,340000,350000,360000,370000,410000,430000,440000,500000,510000,530000,610000,620000,640000");
+//                if (StringUtils.indexOf(s, "上限") != -1) {
+//                    log.error("http.tiqu.qingjuhe.cn获取随机代理今日20个已上限了->{}", s);
+//                    log.info("下血本花钱包周了");
+////                    s = getProxyIp("http://http.tiqu.qingjuhe.cn/getip?num=10&type=1&pack=35871&port=11&lb=1&pb=4&regions=110000,130000,140000,150000,210000,310000,320000,330000,340000,350000,360000,370000,410000,430000,440000,500000,510000,530000,610000,620000,640000");
+                    s = getProxyIp("http://http.tiqu.qingjuhe.cn/getip?num=10&type=1&pack=35872&port=11&lb=1&pb=4&regions=110000,130000,140000,150000,210000,310000,320000,330000,340000,350000,360000,370000,410000,430000,440000,500000,510000,530000,610000,620000,640000");
                     if (StringUtils.indexOf(s, "上限") != -1) {
                         log.error("收费代理到期：老哥，充钱吧！->{}", s);
                         return;
                     }
-                }
-            }
+//                }
+//            }
             log.info(s);
             String[] strings = s.split("\r\n");
             ipList.addAll(Arrays.asList(strings));
