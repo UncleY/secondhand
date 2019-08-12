@@ -4,8 +4,11 @@ import com.personal.secondhand.constants.CommonConstants;
 import com.personal.secondhand.pipeline.FileInfoPipeline;
 import com.personal.secondhand.pipeline.FilePagePipeline;
 import com.personal.secondhand.util.JsoupUtils;
+import com.personal.secondhand.vo.HouseInfo58;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateTime;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -14,8 +17,13 @@ import us.codecraft.webmagic.Site;
 import us.codecraft.webmagic.Spider;
 import us.codecraft.webmagic.processor.PageProcessor;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * 链家页面处理进程 列表页及详情页
+ * 链家爬取相对很多
  */
 @Slf4j
 public class LJPageProcessor implements PageProcessor {
@@ -74,7 +82,19 @@ public class LJPageProcessor implements PageProcessor {
      * @throws Exception
      */
     public static void main(String[] args) throws Exception {
-//        String today = new DateTime().toString("yyyyMMdd");
+
+        Spider spider = downloadHtmlFile();
+        while (true) {
+            if (spider.getStatus() == Spider.Status.Stopped) {
+                //全下载完毕后再解析文件
+                parseHtmlAndCreateExcel();
+                break;
+            }
+        }
+
+    }
+
+    private static Spider downloadHtmlFile() throws Exception {
         String downloadPath = CommonConstants.DOWNLOAD_FILE_PATH + "/ljhtml/pc/";
 
         Spider spider = Spider.create(new LJPageProcessor());
@@ -87,7 +107,20 @@ public class LJPageProcessor implements PageProcessor {
         spider.addPipeline(new FileInfoPipeline(downloadPath));
         spider.thread((Runtime.getRuntime().availableProcessors() - 1) << 1);
         spider.run();
-
+        return spider;
     }
 
+
+    public static void parseHtmlAndCreateExcel() throws Exception {
+        String today = new DateTime().toString("yyyyMMdd");
+        String downloadPath = CommonConstants.DOWNLOAD_FILE_PATH + File.separator + "ljhtml" + File.separator + "pc" + File.separator + today + File.separator + "infoHtml" + File.separator;
+        File file = new File(downloadPath);
+        File[] files = file.listFiles();
+        List<HouseInfo58> info58List = new ArrayList<>(0);
+        for (File f : files) {
+            String html = FileUtils.readFileToString(f, CommonConstants.ENCODING);
+            HouseInfo58 info58 = HouseInfo58.parse58Info(html);
+            info58List.add(info58);
+        }
+    }
 }

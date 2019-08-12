@@ -27,6 +27,10 @@ import java.util.*;
 
 /**
  * 五八页面抽取进程
+ * 反爬限制还是比较多的。
+ * 1）随机字体加密，每页的详情页面的字体都是随机字体，但seo优化meta的description标签中又包含了价格
+ * 2）爬取限制，验证码。
+ * 3）置顶的数据有多次重定向 需要获取到最终的页面路径
  */
 @Slf4j
 public class WBPageProcessor implements PageProcessor {
