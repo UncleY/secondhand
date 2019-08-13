@@ -1,13 +1,16 @@
 package com.personal.secondhand.processor;
 
+import com.alibaba.fastjson.JSON;
 import com.personal.secondhand.constants.CommonConstants;
 import com.personal.secondhand.pipeline.FileInfoPipeline;
 import com.personal.secondhand.pipeline.FilePagePipeline;
+import com.personal.secondhand.util.ExcelUtil;
 import com.personal.secondhand.util.JsoupUtils;
-import com.personal.secondhand.vo.HouseInfo58;
+import com.personal.secondhand.vo.HouseInfoLJ;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.joda.time.DateTime;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -18,6 +21,7 @@ import us.codecraft.webmagic.Spider;
 import us.codecraft.webmagic.processor.PageProcessor;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,6 +37,10 @@ public class LJPageProcessor implements PageProcessor {
     public void process(Page page) {
         String url = page.getUrl().get();
         String html = page.getHtml().get();
+        if (StringUtils.indexOf(html, "没找到您访问的页面，可能原因") != -1) {
+            log.error("页面已经过期{}", url);
+            return;
+        }
         if (StringUtils.indexOf(url, "/pg") != -1) {
             log.info("列表页 {}", url);
             // ul.sellListContent li.clear.LOGCLICKDATA div.info.clear div.title a
@@ -116,11 +124,62 @@ public class LJPageProcessor implements PageProcessor {
         String downloadPath = CommonConstants.DOWNLOAD_FILE_PATH + File.separator + "ljhtml" + File.separator + "pc" + File.separator + today + File.separator + "infoHtml" + File.separator;
         File file = new File(downloadPath);
         File[] files = file.listFiles();
-        List<HouseInfo58> info58List = new ArrayList<>(0);
+        List<HouseInfoLJ> modelList = new ArrayList<>(0);
         for (File f : files) {
             String html = FileUtils.readFileToString(f, CommonConstants.ENCODING);
-            HouseInfo58 info58 = HouseInfo58.parse58Info(html);
-            info58List.add(info58);
+            HouseInfoLJ lj = HouseInfoLJ.parseByHtml(html);
+            modelList.add(lj);
         }
+
+        List<String[]> dataList = new ArrayList<>(0);
+        modelList.stream()
+                .forEach(model -> {
+                    dataList.add(new String[]{
+                            model.getInfoUrl(),
+                            model.getMetaTitle(),
+                            model.getHouseNum(),
+                            model.getTitle(),
+                            model.getTotalPrice(),
+                            model.getPerSquare(),
+                            model.getDownPayment(),
+                            model.getRoom(),
+                            model.getFloor(),
+                            model.getToward(),
+                            model.getDecoration(),
+                            model.getArea(),
+                            model.getBuildLife(),
+                            model.getPropertyRight(),
+                            model.getCommunity(),
+                            model.getRegion(),
+                            model.getPubDate(),
+                            model.getTags(),
+                            model.getHouseUse(),
+                            model.getMortgageInformation(),
+                            model.getHouseIntroduce(),
+                            model.getTransOwnership(),
+                            model.getLinkmanName(),
+                            JSON.toJSONString(model.getImgUrlList())
+                    });
+                });
+
+
+        String[] title = new String[]{"详情页url", "title", "房源编码", "标题", "总价",
+                "单价", "首付参考", "户型结构", "所属楼层", "建筑信息","装修", "建筑面积", "建筑年限",
+                "产权情况", "小区", "位置", "挂牌时间", "房源标签","房屋用途", "抵押信息", "房源特色",
+                "交易权属", "联系人", "图片url地址（jsonArray）"};
+
+        XSSFWorkbook workbook = new XSSFWorkbook();
+        ExcelUtil.make2007Excel(workbook, "lianjia", title, dataList);
+
+        String todayString = new DateTime().toString("yyyyMMdd");
+        File excel = new File("D:/链接房源_" + todayString + ".xlsx");
+        FileUtils.touch(excel);
+        FileOutputStream output = FileUtils.openOutputStream(excel);
+
+        workbook.write(output);
+        output.flush();
+        output.close();
+
+        workbook.close();
     }
 }

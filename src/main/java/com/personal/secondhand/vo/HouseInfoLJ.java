@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -48,7 +49,7 @@ public class HouseInfoLJ implements Serializable {
      */
     private String totalPrice;
     /**
-     * 每平米花费
+     * 单价
      */
     private String perSquare;
     /**
@@ -104,28 +105,22 @@ public class HouseInfoLJ implements Serializable {
      */
     private String houseUse;
     /**
-     * 户型介绍
+     * 抵押信息
      */
-    private String houseType;
+    private String mortgageInformation;
     /**
-     * 周边配套
+     * 房源特色
      */
-    private String peripheralMatching;
+    private String houseIntroduce;
 
     /**
      * 交易权属
      */
     private String transOwnership;
     /**
-     * 联系人名称
+     * 联系人名称 联系人电话
      */
     private String linkmanName;
-
-
-    /**
-     * 联系人电话
-     */
-    private String linkmanPhone;
 
     /**
      * 图片地址
@@ -146,8 +141,10 @@ public class HouseInfoLJ implements Serializable {
 
         String title = document.select("div[class=\"sellDetailHeader\"] div[class=\"title-wrapper\"] div[class=\"content\"] div[class=\"title\"]").text();
 
+        String houseNum = document.select("div[class=\"btnContainer  LOGVIEWDATA LOGVIEW\"]").attr("data-lj_action_resblock_id");
+
         Elements introContent = document.select("div[id=introduction] div div[class=\"introContent\"] div[class=\"base\"] div[class=\"content\"] ul li");
-        for(Element ele : introContent){
+        for (Element ele : introContent) {
             // 去除span标签
             ele.select("span").remove();
         }
@@ -156,7 +153,13 @@ public class HouseInfoLJ implements Serializable {
         String room = introContent.eq(0).text();
 //        String floor = content.select("div[class=\"houseInfo\"] div[class=\"room\"] div[class=\"subInfo\"]").text();
         String floor = introContent.eq(1).text();
+        String propertyRight = introContent.eq(12).text();
 
+
+        String pubDate = document.select("div[class=\"transaction\"] div[class=\"content\"] ul li:eq(0) span:eq(1)").text();
+        String transOwnership = document.select("div[class=\"transaction\"] div[class=\"content\"] ul li:eq(1) span:eq(1)").text();
+        String houseUse = document.select("div[class=\"transaction\"] div[class=\"content\"] ul li:eq(3) span:eq(1)").text();
+        String mortgageInformation = document.select("div[class=\"transaction\"] div[class=\"content\"] ul li:eq(6) span:eq(1)").text();
 
         Elements content = document.select("div[class=\"overview\"] div[class=\"content\"]");
 
@@ -167,8 +170,9 @@ public class HouseInfoLJ implements Serializable {
 
         String perSquare = content.select("div[class=\"price\"] div[class=\"text\"] div[class=\"unitPrice\"]").text();
 
-        String downPayment = content.select("div[class=\"price\"] div[class=\"text\"] div[class=\"tax\"] span[class=\"taxtext\"]").text();
-
+        String comment = content.select("div[class=\"price\"] div[class=\"text\"]").html();
+        comment = comment.replaceAll("<!--", "").replaceAll("-->", "");
+        String downPayment = JsoupUtils.parse(comment).select("div[class=tax] span[class=\"taxtext\"]").text();
 
 
         String toward = content.select("div[class=\"houseInfo\"] div[class=\"type\"] div[class=\"mainInfo\"]").text();
@@ -178,9 +182,23 @@ public class HouseInfoLJ implements Serializable {
         String buildLife = content.select("div[class=\"houseInfo\"] div[class=\"area\"] div[class=\"subInfo\"]").text();
 
 
-        String community = content.select("div[class=\"aroundInfo\"] div[class=\"communityName\"] a:eq(0)").html();
+        String community = content.select("div[class=\"aroundInfo\"] div[class=\"communityName\"] a").text();
+        community = community.replace(" 地图", "");
         String region = content.select("div[class=\"aroundInfo\"] div[class=\"areaName\"] span[class=\"info\"]").text();
 
+
+        Elements eleTags = document.select("div[class=\"introContent showbasemore\"] div[class=\"tags clear\"] div[class=\"content\"] a");
+        String tags = "";
+        for (Element ele : eleTags) {
+            tags += ele.text() + ";";
+        }
+
+
+        Elements eleHouseIntro = document.select("div[class=baseattribute clear]");
+        String houseIntroduce = "";
+        for (Element ele : eleHouseIntro) {
+            houseIntroduce += ele.text() + ";";
+        }
 
 
         List<String> imgList = new ArrayList<>(0);
@@ -190,9 +208,19 @@ public class HouseInfoLJ implements Serializable {
             imgList.add(imgUrl);
         }
 
+        String linkman = document.select("div[class=\"agent-tips\"] div[class=\"fr\"]").text();
+        linkman = linkman.replace("/房源维护人", "");
+        if (StringUtils.isBlank(linkman)) {
+            linkman = document.select("div[class=\"brokerInfoText fr LOGVIEWDATA\"] div[class=\"brokerName\"] a").text();
+            String linkmanPhone = document.select("div[class=\"brokerInfoText fr LOGVIEWDATA\"] div[class=\"phone\"]").text();
+            linkmanPhone = linkmanPhone.replace("微信扫码拨号", "");
+            linkman = linkman + " " + linkmanPhone;
+        }
 
         HouseInfoLJ model = HouseInfoLJ.builder()
+                .infoUrl("https://sy.lianjia.com/ershoufang/" + houseNum + ".html")
                 .metaTitle(metaTitle)
+                .houseNum(houseNum)
                 .totalPrice(totalPrice)
                 .title(title)
                 .totalPrice(totalPrice)
@@ -204,18 +232,26 @@ public class HouseInfoLJ implements Serializable {
                 .decoration(decoration)
                 .area(area)
                 .buildLife(buildLife)
+                .propertyRight(propertyRight)
                 .community(community)
                 .region(region)
+                .pubDate(pubDate)
+                .tags(tags)
+                .transOwnership(transOwnership)
+                .houseUse(houseUse)
+                .mortgageInformation(mortgageInformation)
+                .houseIntroduce(houseIntroduce)
+                .linkmanName(linkman)
 
                 .imgUrlList(imgList)
                 .build();
-        log.info(model.toString());
+//        log.info(model.toString());
         return model;
     }
 
     public static void main(String[] args) throws Exception {
-        File file = new File("D:\\spider\\ljhtml\\pc\\20190812\\infoHtml\\sy.lianjia.com_ershoufang_102101737125.html.html");
-        String html = FileUtils.readFileToString(file,"utf-8");
+        File file = new File("D:\\spider\\ljhtml\\pc\\20190813\\infoHtml\\sy.lianjia.com_ershoufang_102100831577.html.html");
+        String html = FileUtils.readFileToString(file, "utf-8");
         parseByHtml(html);
     }
 
