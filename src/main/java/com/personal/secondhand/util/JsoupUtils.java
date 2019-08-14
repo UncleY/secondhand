@@ -89,7 +89,7 @@ public class JsoupUtils {
                 .header("Connection", "keep-alive")
                 .header("Upgrade-Insecure-Requests", "1")
                 .header("TE", "Trailers")
-                // 代理
+                // userAgent
                 .userAgent(CommonConstants.getRandomUserAgent())
                 // 编码格式
                 .postDataCharset(ENCODING)

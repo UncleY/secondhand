@@ -102,6 +102,11 @@ public class LJPageProcessor implements PageProcessor {
 
     }
 
+    /**
+     * 下载html内容存储至本地
+     * @return
+     * @throws Exception
+     */
     private static Spider downloadHtmlFile() throws Exception {
         String downloadPath = CommonConstants.DOWNLOAD_FILE_PATH + "/ljhtml/pc/";
 
@@ -118,7 +123,10 @@ public class LJPageProcessor implements PageProcessor {
         return spider;
     }
 
-
+    /**
+     * 解析下载好的html内容并生成excel
+     * @throws Exception
+     */
     public static void parseHtmlAndCreateExcel() throws Exception {
         String today = new DateTime().toString("yyyyMMdd");
         String downloadPath = CommonConstants.DOWNLOAD_FILE_PATH + File.separator + "ljhtml" + File.separator + "pc" + File.separator + today + File.separator + "infoHtml" + File.separator;

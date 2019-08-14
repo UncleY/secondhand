@@ -10,9 +10,20 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * 简易的excel导出 2017+
+ */
 public class ExcelUtil {
 
-
+    /**
+     *
+     * @param workbook
+     * @param sheetName
+     * @param title
+     * @param dataList
+     * @return
+     * @throws Exception
+     */
     public static XSSFWorkbook make2007Excel(XSSFWorkbook workbook, String sheetName, String[] title, List<String[]> dataList) throws Exception {
         if (Objects.isNull(workbook)) {
             workbook = new XSSFWorkbook();

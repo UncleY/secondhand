@@ -4,8 +4,16 @@
 爬取相关网站房源（二手房）信息
 如：58（个人房源）、芒果、链家等。
 
-用WebMagic抓取房源数据信息 将爬取的html内容存储至本地
-然后用Jsoup分析获取相关元素内容 组成vo或excel进行页面输出
+用WebMagic抓取房源数据信息 将爬取的html内容存储至本地文件
+然后用Jsoup分析获取相关元素内容 组成vo或excel进行输出
+
+
+# 程序入口
+party文件夹有提供phantomjs.exe 请将CommonConstants的phantomjs.exe所在物理路径修改为自己本机
+
+LJPageProcessor#main 链家二手房数据爬取 
+MGPageProcessor#main 芒果二手房数据爬取 需修改phantomjs.exe为本地物理路径
+WBPageProcessor#main 58二手房数据爬取
 
 ###反爬虫
 芒果是js动态跳转（正常访问的页面数据都很慢10秒+） 无法使用正常的Jsoup/httpclient进行获取html内容

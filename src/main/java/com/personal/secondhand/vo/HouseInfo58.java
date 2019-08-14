@@ -19,6 +19,13 @@ import java.util.List;
 
 /**
  * 58房源 提取信息 映射vo
+ * 详情地址
+ * ps ：因为58是字体库加密，随着网页的打开会加载一个自定义的fangchan-secret 用base64加密的
+ * 类似这种
+ * @font-face{font-family:'fangchan-secret';src:url('data:application/font-ttf;charset=utf-8;base64内容';}
+ * 类似解密的网上搜索有很多 反正大概思路就是把base64下载到本地字体 并计算偏移量内容 进行关联映射最后得到实际的数字，
+ * 但在仔细观察seo的meta标签时发现有总价信息。
+ * 另：jsoup 的selector模式可以参考博客https://www.cnblogs.com/yueshutong/p/9381530.html
  */
 @Slf4j
 @Data

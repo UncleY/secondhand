@@ -47,7 +47,7 @@ public class WBPageProcessor implements PageProcessor {
             .addHeader("Cache-Control", "max-age=0")
             .addHeader("Cookie", "userid360_xml=84FDE92D1BAF969AF519B90812CFCF13; time_create=1567262816215; f=n; commontopbar_new_city_info=188%7C%E6%B2%88%E9%98%B3%7Csy; commontopbar_ipcity=sz%7C%E6%B7%B1%E5%9C%B3%7C0; id58=c5/nn10ylddQ114tnqyDAg==; 58home=sy; city=sy; 58tj_uuid=8e18e6a5-4c78-4b06-8864-9452f3cd3c91; new_uv=19; als=0; xxzl_deviceid=cWfZMCxyit2BPkbIU%2Bd8a8FdTbw2l9sEChCtC%2F7SrH85HAiC9SoYJ3chn9DmdGbN; wmda_uuid=076052445fe0f88b1f1c416e1906d6ff; wmda_new_uuid=1; wmda_visited_projects=%3B6333604277682; Hm_lvt_295da9254bbc2518107d846e1641908e=1565188906; JSESSIONID=00CD125CDA0A0A3F9447C5E4384138CB; wmda_session_id_6333604277682=1565534678037-aa587477-afc5-1abe; new_session=0; utm_source=; spm=; init_refer=; xzfzqtoken=I9cAkHNQ8%2FejJcgJTNTyXNBajtcEH%2BKBn%2F4UsvR67PvvaG22wlL4VJi%2BVLkPjV3Qin35brBb%2F%2FeSODvMgkQULA%3D%3D; f=n; commontopbar_new_city_info=188%7C%E6%B2%88%E9%98%B3%7Csy; commontopbar_ipcity=sz%7C%E6%B7%B1%E5%9C%B3%7C0; ppStore_fingerprint=A8406BD5518095CDDD4B89FB58ED8926DB3B2A1E581BE2E1%EF%BC%BF1565538031842")
             .addHeader("Upgrade-Insecure-Requests", "1")
-//            .addHeader("Referer", "https://sy.58.com/ershoufang/0/")
+            .addHeader("Referer", "https://sy.58.com/ershoufang/0/")
             .addHeader("Connection", "keep-alive")
             .addHeader("TE", "Trailers")
             .setRetryTimes(3)
@@ -60,11 +60,8 @@ public class WBPageProcessor implements PageProcessor {
 
         String url = page.getRequest().getUrl();
         String html = page.getHtml().get();
-//        System.out.println(url);
-//        System.out.println(page.getHtml().get());
-        if (url.indexOf("?target") != -1) {
 
-        } else if (html.indexOf("请输入验证码") != -1 || url.indexOf("target") != -1) {
+        if (html.indexOf("请输入验证码") != -1 || url.indexOf("target") != -1) {
             System.out.println(page);
             try {
                 Thread.sleep(CommonConstants.TIME_OUT);
@@ -115,7 +112,9 @@ public class WBPageProcessor implements PageProcessor {
     }
 
     /**
+     * 置顶的数据url会重定向
      * 获取最终重定向地址
+     *
      * @param url
      * @param cookies
      * @return
@@ -138,11 +137,17 @@ public class WBPageProcessor implements PageProcessor {
         return "";
     }
 
+    /**
+     * 程序入口
+     *
+     * @param args
+     * @throws Exception
+     */
     public static void main(String[] args) throws Exception {
         // 第一步 先下载到本地html文件
         Spider spider = downloadHtmlFile();
-        while(true){
-            if(spider.getStatus() == Spider.Status.Stopped){
+        while (true) {
+            if (spider.getStatus() == Spider.Status.Stopped) {
                 //全下载完毕后再解析文件
                 parseHtmlAndCreateExcel();
                 break;
@@ -159,18 +164,6 @@ public class WBPageProcessor implements PageProcessor {
         String downloadPath = CommonConstants.DOWNLOAD_FILE_PATH + "/58html/";
         String url = "https://sy.58.com/ershoufang/0/pn";
 
-//
-//        HttpClientDownloader httpClientDownloader = new HttpClientDownloader();
-//        List<String> proxyList = CommonConstants.PROXY_IP;
-//        Proxy[] proxies = new Proxy[proxyList.size()];
-//
-//        for (int i = 0; i < proxyList.size(); i++) {
-//            String proxyIP = proxyList.get(i);
-//            String ip = proxyIP.split(":")[0];
-//            String port = proxyIP.split(":")[1];
-//            proxies[i] = new Proxy(ip, Integer.parseInt(port));
-//        }
-//        httpClientDownloader.setProxyProvider(SimpleProxyProvider.from(proxies));
         Connection.Response response = JsoupUtils.connect("https://sy.58.com/ershoufang/0/?ClickID=1").execute();
         cookies = response.cookies();
         for (Map.Entry<String, String> entrySet : cookies.entrySet()) {
@@ -178,7 +171,6 @@ public class WBPageProcessor implements PageProcessor {
             String value = entrySet.getValue();
             site.addCookie(key, value);
         }
-
 
         Spider spider = Spider.create(new WBPageProcessor());
         int start = 1;
@@ -188,7 +180,6 @@ public class WBPageProcessor implements PageProcessor {
             String pnUrl = url + i + "/?ClickID=1";
             spider.addUrl(pnUrl);
         }
-//        spider.setDownloader(new WebDriverDownloader());
         // 数据处理
         spider.addPipeline(new FileInfoPipeline(downloadPath));
         spider.addPipeline(new FilePagePipeline(downloadPath));

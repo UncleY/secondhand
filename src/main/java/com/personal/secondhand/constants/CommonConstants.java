@@ -130,7 +130,6 @@ public class CommonConstants {
         try {
             String s = "";
 
-
 //            s = getProxyIp("http://api.xedl.321194.com/getip?num=1&type=1&port=11&pack=4055&ts=0&cs=1&lb=1");
 //            if (StringUtils.indexOf(s, "您的套餐今日已到达上限") != -1) {
 //                log.error("api.xedl.321194.com获取50个随机代理今日已上限->{}", s);

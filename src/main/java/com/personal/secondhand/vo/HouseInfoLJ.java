@@ -6,13 +6,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -249,10 +247,10 @@ public class HouseInfoLJ implements Serializable {
         return model;
     }
 
-    public static void main(String[] args) throws Exception {
-        File file = new File("D:\\spider\\ljhtml\\pc\\20190813\\infoHtml\\sy.lianjia.com_ershoufang_102100831577.html.html");
-        String html = FileUtils.readFileToString(file, "utf-8");
-        parseByHtml(html);
-    }
+//    public static void main(String[] args) throws Exception {
+//        File file = new File("D:\\spider\\ljhtml\\pc\\20190813\\infoHtml\\sy.lianjia.com_ershoufang_102100831577.html.html");
+//        String html = FileUtils.readFileToString(file, "utf-8");
+//        parseByHtml(html);
+//    }
 
 }

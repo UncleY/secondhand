@@ -1,31 +1,38 @@
 package com.personal.secondhand.vo;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONPath;
-import com.personal.secondhand.constants.CommonConstants;
-import com.personal.secondhand.util.ExcelUtil;
 import com.personal.secondhand.util.JsoupUtils;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.joda.time.DateTime;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * 芒果房源信息 映射vo
+ *
+ * 联系人电话需要再次访问接口
+ * 如https://www.517.cn/Ashx/userCenter/Account.ashx?action=Getmobile&uid=联系人id
+ * 返回形式如
+ {
+ "data": {
+ "data": {
+ "mobile": "13674188664"
+ },
+ "flag": -1,
+ "debug": "",
+ "msg": "未登录"
+ },
+ "debug": ""
+ }
  */
 @Slf4j
 @Data
@@ -222,67 +229,67 @@ public class HouseInfo517CN implements Serializable {
     }
 
 
-    public static void main(String[] args) throws Exception {
-
-        // 存储详情的html的路径地址
-        File file = new File("D:\\517html\\pc\\20190811\\infoHtml\\");
-        File[] files = file.listFiles();
-        List<HouseInfo517CN> info58List = new ArrayList<>(0);
-        for (File f : files) {
-            String html = FileUtils.readFileToString(f, CommonConstants.ENCODING);
-            HouseInfo517CN info = initByHtml(html);
-            info58List.add(info);
-        }
-
-        List<String[]> dataList = new ArrayList<>(0);
-
-        info58List.stream()
-                .forEach(model -> {
-                    dataList.add(new String[]{
-                            model.getInfoUrl(),
-                            model.getMetaTitle(),
-                            model.getHouseNum(),
-                            model.getTaxTags(),
-                            model.getTitle(),
-                            model.getTotalPrice(),
-                            model.getPerSquare(),
-                            model.getRoom(),
-                            model.getArea(),
-                            model.getBuildLife(),
-                            model.getToward(),
-                            model.getFloor(),
-                            model.getDecoration(),
-                            model.getCommunity(),
-                            model.getAddress(),
-                            model.getAvgPrice(),
-                            model.getHouseMemo(),
-                            model.getLinkmanId(),
-                            model.getLinkmanName(),
-                            model.getLinkmanPhone(),
-                            model.getLinkmanExp(),
-                            JSON.toJSONString(model.getImgUrlList())
-                    });
-                });
-
-
-        String[] title58 = new String[]{"详情页url", "title", "房源编号", "标签", "标题", "总价", "单价",
-                "户型结构", "建筑面积", "建筑年限", "户型朝向",
-                "所属楼层", "装修情况", "小区名称", "小区地址", "小区均价",
-                "房源信息介绍", "联系人id", "联系人名称", "联系人电话", "联系人从业年限", "图片url地址（jsonArray）"};
-
-        XSSFWorkbook workbook = new XSSFWorkbook();
-        ExcelUtil.make2007Excel(workbook, "517", title58, dataList);
-
-        String todayString = new DateTime().toString("yyyyMMdd");
-        File excel = new File("D:/ershoufang" + todayString + ".xlsx");
-        FileUtils.touch(excel);
-        FileOutputStream output = FileUtils.openOutputStream(excel);
-
-        workbook.write(output);
-        output.flush();
-        output.close();
-
-        workbook.close();
-    }
+//    public static void main(String[] args) throws Exception {
+//
+//        // 存储详情的html的路径地址
+//        File file = new File("D:\\517html\\pc\\20190811\\infoHtml\\");
+//        File[] files = file.listFiles();
+//        List<HouseInfo517CN> info58List = new ArrayList<>(0);
+//        for (File f : files) {
+//            String html = FileUtils.readFileToString(f, CommonConstants.ENCODING);
+//            HouseInfo517CN info = initByHtml(html);
+//            info58List.add(info);
+//        }
+//
+//        List<String[]> dataList = new ArrayList<>(0);
+//
+//        info58List.stream()
+//                .forEach(model -> {
+//                    dataList.add(new String[]{
+//                            model.getInfoUrl(),
+//                            model.getMetaTitle(),
+//                            model.getHouseNum(),
+//                            model.getTaxTags(),
+//                            model.getTitle(),
+//                            model.getTotalPrice(),
+//                            model.getPerSquare(),
+//                            model.getRoom(),
+//                            model.getArea(),
+//                            model.getBuildLife(),
+//                            model.getToward(),
+//                            model.getFloor(),
+//                            model.getDecoration(),
+//                            model.getCommunity(),
+//                            model.getAddress(),
+//                            model.getAvgPrice(),
+//                            model.getHouseMemo(),
+//                            model.getLinkmanId(),
+//                            model.getLinkmanName(),
+//                            model.getLinkmanPhone(),
+//                            model.getLinkmanExp(),
+//                            JSON.toJSONString(model.getImgUrlList())
+//                    });
+//                });
+//
+//
+//        String[] title58 = new String[]{"详情页url", "title", "房源编号", "标签", "标题", "总价", "单价",
+//                "户型结构", "建筑面积", "建筑年限", "户型朝向",
+//                "所属楼层", "装修情况", "小区名称", "小区地址", "小区均价",
+//                "房源信息介绍", "联系人id", "联系人名称", "联系人电话", "联系人从业年限", "图片url地址（jsonArray）"};
+//
+//        XSSFWorkbook workbook = new XSSFWorkbook();
+//        ExcelUtil.make2007Excel(workbook, "517", title58, dataList);
+//
+//        String todayString = new DateTime().toString("yyyyMMdd");
+//        File excel = new File("D:/ershoufang" + todayString + ".xlsx");
+//        FileUtils.touch(excel);
+//        FileOutputStream output = FileUtils.openOutputStream(excel);
+//
+//        workbook.write(output);
+//        output.flush();
+//        output.close();
+//
+//        workbook.close();
+//    }
 
 }

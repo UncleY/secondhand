@@ -14,9 +14,15 @@ import java.io.PrintWriter;
 
 /**
  * 公共的详情页面下载到本地
+ * 只要接收到infoHtml即生成列表html页面
+ * 文件命名替换（原命名可能无法找到具体访问url）：
+ *  （1）去除https://
+ *  （2）?替换成#
+ *  （3）/替换成_
  */
 @Slf4j
 public class FileInfoPipeline extends FilePipeline {
+
     public FileInfoPipeline() {
         super();
     }

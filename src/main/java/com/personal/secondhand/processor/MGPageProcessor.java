@@ -1,13 +1,18 @@
 package com.personal.secondhand.processor;
 
+import com.alibaba.fastjson.JSON;
 import com.personal.secondhand.constants.CommonConstants;
 import com.personal.secondhand.download.WebDriverDownloader;
 import com.personal.secondhand.pipeline.FileInfoPipeline;
 import com.personal.secondhand.pipeline.FilePagePipeline;
+import com.personal.secondhand.util.ExcelUtil;
 import com.personal.secondhand.util.JsoupUtils;
+import com.personal.secondhand.vo.HouseInfo517CN;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.joda.time.DateTime;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -17,10 +22,15 @@ import us.codecraft.webmagic.Site;
 import us.codecraft.webmagic.Spider;
 import us.codecraft.webmagic.processor.PageProcessor;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * 芒果517
  * asp网站 页面访问较慢 并且有动态js跳转 需要模拟浏览器访问
- * WebDriverDownloader进行访问
+ * 使用Selenium + phantomjs模拟访问  WebDriverDownloader
  */
 @Slf4j
 public class MGPageProcessor implements PageProcessor {
@@ -101,25 +111,31 @@ public class MGPageProcessor implements PageProcessor {
         return site;
     }
 
-//    public static void main(String[] args) throws Exception {
-//        File file = new File("C:\\Users\\guosen\\Desktop\\517html.html");
-//        String html = FileUtils.readFileToString(file, "utf-8");
-//        Document document = JsoupUtils.parse(html);
-//        Elements elements = document.select("div[class=ListBox-I clearfix]");
-//        for (Element ele : elements) {
-//            String url = ele.select("div[class=LB-f-img] a").attr("href");
-//            String linkman = ele.select("div[class=price] p[class=P-gx] a").attr("href");
-//            String pid = linkman.replaceAll("/s", "").replaceAll("/", "");
-//            System.out.println(url);
-//            System.out.println(linkman);
-//            System.out.println(pid);
-//            System.out.println("#############");
-//        }
-//
-//
-//    }
-
+    /**
+     * 程序入口
+     * 请将commonConstants的phantomjs.exe声明本地物理路径
+     * @param args
+     * @throws Exception
+     */
     public static void main(String[] args) throws Exception {
+        // 第一步 先下载到本地html文件
+        Spider spider = downloadHtmlFile();
+        while (true) {
+            if (spider.getStatus() == Spider.Status.Stopped) {
+                //全下载完毕后再解析文件
+                parseHtmlAndCreateExcel();
+                break;
+            }
+        }
+    }
+
+    /**
+     * 下载html存储至本地
+     *
+     * @return
+     * @throws Exception
+     */
+    private static Spider downloadHtmlFile() throws Exception {
         // 1~100 除了6个推荐位都是今日更新
 //        String url = "https://www.517.cn/ershoufang/osj1/area/pg数字/?ckattempt=1";
         String today = new DateTime().toString("yyyyMMdd");
@@ -131,11 +147,82 @@ public class MGPageProcessor implements PageProcessor {
         for (int i = startPage; i <= endPage; i++) {
             spider.addUrl("https://www.517.cn/ershoufang/osj1/area/pg" + i + "/?ckattempt=1");
         }
+        // 用Selenium + phantomjs模拟浏览器访问
         spider.setDownloader(new WebDriverDownloader());
         spider.addPipeline(new FilePagePipeline(downloadPath));
         spider.addPipeline(new FileInfoPipeline(downloadPath));
         spider.thread((Runtime.getRuntime().availableProcessors() - 1) << 1);
         spider.run();
+        return spider;
+    }
+
+    /**
+     * 解析本地的html内容创建excel
+     *
+     * @throws Exception
+     */
+    private static void parseHtmlAndCreateExcel() throws Exception {
+        // 存储详情的html的路径地址
+        String today = new DateTime().toString("yyyyMMdd");
+        String downloadPath = CommonConstants.DOWNLOAD_FILE_PATH + File.separator + "517html" + File.separator + "pc" + File.separator + today + File.separator + "infoHtml" + File.separator;
+        File file = new File(downloadPath);
+        File[] files = file.listFiles();
+        List<HouseInfo517CN> info58List = new ArrayList<>(0);
+        for (File f : files) {
+            String html = FileUtils.readFileToString(f, CommonConstants.ENCODING);
+            HouseInfo517CN info = HouseInfo517CN.initByHtml(html);
+            info58List.add(info);
+        }
+
+        List<String[]> dataList = new ArrayList<>(0);
+
+        info58List.stream()
+                .forEach(model -> {
+                    dataList.add(new String[]{
+                            model.getInfoUrl(),
+                            model.getMetaTitle(),
+                            model.getHouseNum(),
+                            model.getTaxTags(),
+                            model.getTitle(),
+                            model.getTotalPrice(),
+                            model.getPerSquare(),
+                            model.getRoom(),
+                            model.getArea(),
+                            model.getBuildLife(),
+                            model.getToward(),
+                            model.getFloor(),
+                            model.getDecoration(),
+                            model.getCommunity(),
+                            model.getAddress(),
+                            model.getAvgPrice(),
+                            model.getHouseMemo(),
+                            model.getLinkmanId(),
+                            model.getLinkmanName(),
+                            model.getLinkmanPhone(),
+                            model.getLinkmanExp(),
+                            JSON.toJSONString(model.getImgUrlList())
+                    });
+                });
+
+
+        String[] title58 = new String[]{"详情页url", "title", "房源编号", "标签", "标题", "总价", "单价",
+                "户型结构", "建筑面积", "建筑年限", "户型朝向",
+                "所属楼层", "装修情况", "小区名称", "小区地址", "小区均价",
+                "房源信息介绍", "联系人id", "联系人名称", "联系人电话", "联系人从业年限", "图片url地址（jsonArray）"};
+
+        XSSFWorkbook workbook = new XSSFWorkbook();
+        ExcelUtil.make2007Excel(workbook, "517", title58, dataList);
+
+        String todayString = new DateTime().toString("yyyyMMdd");
+        File excel = new File("D:/芒果二手房源" + todayString + ".xlsx");
+        FileUtils.touch(excel);
+        FileOutputStream output = FileUtils.openOutputStream(excel);
+
+        workbook.write(output);
+        output.flush();
+        output.close();
+
+        workbook.close();
     }
 
 }
