@@ -8,7 +8,7 @@
 然后用Jsoup分析获取相关元素内容 组成vo或excel进行输出
 
 
-# 程序启动
+## 程序启动
 party文件夹有提供phantomjs.exe 请将CommonConstants的phantomjs.exe所在物理路径修改为自己本机
 
 LJPageProcessor#main 链家二手房数据爬取 
@@ -20,7 +20,7 @@ WBPageProcessor#main 58二手房数据爬取
 解析内容随网站css样式变更可能会失效，关于css路径可以使用Chrome或Firefox查看元素后 选择自己想爬取的内容进行 
 右键->复制->css路径 即可
 
-###反爬虫
+## 反爬虫
 芒果是js动态跳转（正常访问的页面数据都很慢10秒+） 无法使用正常的Jsoup/httpclient进行获取html内容
 采取selenium + phantomJs 模拟浏览器进行数据爬取
 获取联系人api没做限制
@@ -32,7 +32,7 @@ WBPageProcessor#main 58二手房数据爬取
 https://www.cnblogs.com/a595452248/p/10800845.html
 https://www.jianshu.com/p/a5d904c5d88e
 
-###相关文档
+## 相关文档
 
 **webmagic**项目地址 https://github.com/code4craft/webmagic 中文文档 http://webmagic.io/
 
@@ -44,7 +44,7 @@ ps:最新版的selenium不再支持phantomjs
 **PhantomJS**项目地址 https://github.com/ariya/phantomjs  目前停止更新版本 替代的话可以找Firefox Headless及Headless Chrome都可以
 
 
-###bug list
+## bug list
 2019-8-11  
 1）按每页N条数据*M页的总数，可能会有漏爬几个详情页，暂未找到原因。  
 
@@ -52,7 +52,7 @@ ps:最新版的selenium不再支持phantomjs
 
 
 
-###其他信息
+## 其他信息
 jdk 1.8.0.181  win7/10  idea2017.2.6
 
 
