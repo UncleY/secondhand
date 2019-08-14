@@ -12,7 +12,9 @@
 party文件夹有提供phantomjs.exe 请将CommonConstants的phantomjs.exe所在物理路径修改为自己本机
 
 LJPageProcessor#main 链家二手房数据爬取 
+
 MGPageProcessor#main 芒果二手房数据爬取 需修改phantomjs.exe为本地物理路径
+
 WBPageProcessor#main 58二手房数据爬取
 
 解析内容随网站css样式变更可能会失效，关于css路径可以使用Chrome或Firefox查看元素后 选择自己想爬取的内容进行 
