@@ -8,17 +8,20 @@
 然后用Jsoup分析获取相关元素内容 组成vo或excel进行输出
 
 
-# 程序入口
+# 程序启动
 party文件夹有提供phantomjs.exe 请将CommonConstants的phantomjs.exe所在物理路径修改为自己本机
 
 LJPageProcessor#main 链家二手房数据爬取 
 MGPageProcessor#main 芒果二手房数据爬取 需修改phantomjs.exe为本地物理路径
 WBPageProcessor#main 58二手房数据爬取
 
+解析内容随网站css样式变更可能会失效，关于css路径可以使用Chrome或Firefox查看元素后 选择自己想爬取的内容进行 
+右键->复制->css路径 即可
+
 ###反爬虫
 芒果是js动态跳转（正常访问的页面数据都很慢10秒+） 无法使用正常的Jsoup/httpclient进行获取html内容
 采取selenium + phantomJs 模拟浏览器进行数据爬取
-但获取联系人api没做限制
+获取联系人api没做限制
 
 58有防爬措施及验证码，可采用proxy ip代理或降低每分爬取频率
 58列表页带置顶的数据链接 是有重定向的 要获取到最终的实际页面
