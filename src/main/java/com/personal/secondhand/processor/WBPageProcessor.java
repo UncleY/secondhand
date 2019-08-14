@@ -62,12 +62,7 @@ public class WBPageProcessor implements PageProcessor {
         String html = page.getHtml().get();
 
         if (html.indexOf("请输入验证码") != -1 || url.indexOf("target") != -1) {
-            System.out.println(page);
-            try {
-                Thread.sleep(CommonConstants.TIME_OUT);
-            } catch (Exception e) {
-                log.error("睡眠异常", e);
-            }
+
             page.addTargetRequest(url);
         } else if (url.indexOf("x.shtml") != -1) {
             // 正则有点弱，https://sy.58.com/ershoufang/十四位数字x.shtml?*
